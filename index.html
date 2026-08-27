@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>My PDF Editor</title>
+  <title>SSPDF Editor</title>
 
   <link rel="stylesheet" href="style.css">
 
@@ -17,41 +17,46 @@
 
 <body>
 
-<div class="app">
+  <header class="topbar">
 
-  <!-- Header -->
-
-  <header>
-
-    <div class="logo">
-      My PDF Editor
+    <div class="brand">
+      <span class="brand-icon">S</span>
+      <span>SSPDF</span>
+      <small>PDF Editor</small>
     </div>
 
     <div class="privacy">
-      🔒 Files stay on your device
+      🔒 Your files stay on your device
     </div>
 
   </header>
 
 
-  <!-- Upload Screen -->
+  <!-- HOME / UPLOAD -->
 
-  <div id="uploadScreen" class="upload-screen">
+  <main id="homeScreen" class="home">
 
-    <div class="upload-box" id="dropZone">
+    <div
+      id="dropZone"
+      class="drop-zone"
+    >
 
-      <div class="upload-icon">
-        📄
-      </div>
+      <div class="pdf-icon">PDF</div>
 
-      <h2>Open PDF</h2>
+      <h1>Edit PDF Online</h1>
 
       <p>
-        Select a PDF from your computer.
-        Your file will not be uploaded anywhere.
+        Open a PDF and edit it directly in your browser.
       </p>
 
-      <label for="fileInput" class="upload-btn">
+      <p class="privacy-text">
+        Your PDF is processed locally and is never uploaded.
+      </p>
+
+      <label
+        for="fileInput"
+        class="primary-btn"
+      >
         Choose PDF
       </label>
 
@@ -62,84 +67,138 @@
         hidden
       >
 
-      <p class="drag-text">
-        or drag and drop PDF here
-      </p>
+      <div class="drop-hint">
+        or drag & drop your PDF here
+      </div>
 
     </div>
 
-  </div>
+  </main>
 
 
-  <!-- Editor -->
+  <!-- EDITOR -->
 
-  <div id="editorScreen" class="editor hidden">
-
-    <!-- Toolbar -->
+  <main
+    id="editorScreen"
+    class="editor hidden"
+  >
 
     <div class="toolbar">
 
-      <button id="prevPage">
-        ◀ Previous
-      </button>
+      <div class="tool-group">
 
-      <span id="pageInfo">
-        Page 1
-      </span>
+        <button
+          id="openAnother"
+          title="Open another PDF"
+        >
+          📂 Open
+        </button>
 
-      <button id="nextPage">
-        Next ▶
-      </button>
+      </div>
 
-      <div class="separator"></div>
 
-      <button id="zoomOut">
-        −
-      </button>
+      <div class="tool-group">
 
-      <span id="zoomLevel">
-        100%
-      </span>
+        <button id="prevPage">
+          ◀
+        </button>
 
-      <button id="zoomIn">
-        +
-      </button>
+        <span id="pageInfo">
+          1 / 1
+        </span>
 
-      <div class="separator"></div>
+        <button id="nextPage">
+          ▶
+        </button>
 
-      <button id="addText">
-        T Add Text
-      </button>
+      </div>
 
-      <div class="separator"></div>
 
-      <button id="downloadPDF" class="download-btn">
-        ⬇ Download
+      <div class="tool-group">
+
+        <button id="zoomOut">
+          −
+        </button>
+
+        <span id="zoomLevel">
+          100%
+        </span>
+
+        <button id="zoomIn">
+          +
+        </button>
+
+      </div>
+
+
+      <div class="tool-group">
+
+        <button
+          id="addText"
+          class="tool-button"
+        >
+          T&nbsp; Text
+        </button>
+
+        <button
+          id="deleteSelected"
+          class="tool-button"
+        >
+          🗑 Delete
+        </button>
+
+        <button
+          id="undoButton"
+          class="tool-button"
+        >
+          ↶ Undo
+        </button>
+
+      </div>
+
+
+      <div class="toolbar-spacer"></div>
+
+
+      <button
+        id="downloadPDF"
+        class="download-button"
+      >
+        ⬇ Download PDF
       </button>
 
     </div>
 
 
-    <!-- PDF Area -->
+    <div class="workspace">
 
-    <div class="pdf-container">
+      <div
+        id="pdfContainer"
+        class="pdf-container"
+      >
 
-      <div id="pdfWrapper">
+        <div
+          id="pdfWrapper"
+          class="pdf-wrapper"
+        >
 
-        <canvas id="pdfCanvas"></canvas>
+          <canvas id="pdfCanvas"></canvas>
 
-        <div id="textLayer"></div>
+          <div
+            id="textLayer"
+            class="text-layer"
+          ></div>
+
+        </div>
 
       </div>
 
     </div>
 
-  </div>
-
-</div>
+  </main>
 
 
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
