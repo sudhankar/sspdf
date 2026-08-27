@@ -1,8 +1,6 @@
 /* ==========================================
-   SSPDF EDITOR
-   Client-side PDF editor
+   SSPDF - CLIENT SIDE PDF EDITOR
 ========================================== */
-
 
 const {
   PDFDocument,
@@ -18,7 +16,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 
 
 /* ==========================================
-   ELEMENTS
+   HTML ELEMENTS
 ========================================== */
 
 const fileInput =
@@ -27,8 +25,8 @@ const fileInput =
 const dropZone =
   document.getElementById("dropZone");
 
-const homeScreen =
-  document.getElementById("homeScreen");
+const uploadScreen =
+  document.getElementById("uploadScreen");
 
 const editorScreen =
   document.getElementById("editorScreen");
@@ -36,8 +34,8 @@ const editorScreen =
 const pdfCanvas =
   document.getElementById("pdfCanvas");
 
-const pdfWrapper =
-  document.getElementById("pdfWrapper");
+const pdfPage =
+  document.getElementById("pdfPage");
 
 const textLayer =
   document.getElementById("textLayer");
@@ -47,7 +45,7 @@ const ctx =
 
 
 /* ==========================================
-   STATE
+   PDF STATE
 ========================================== */
 
 let originalPDFBytes = null;
@@ -60,31 +58,36 @@ let totalPages = 0;
 
 let scale = 1.25;
 
-let selectedText = null;
-
 
 /*
-   Text objects are stored separately
-   for each PDF page.
+  Text objects for every page.
+
+  Example:
+
+  textObjects[1] = [...]
+  textObjects[2] = [...]
 */
 
 let textObjects = {};
 
 
-/*
-   Undo history
-*/
+/* Currently selected text */
+
+let selectedText = null;
+
+
+/* Undo history */
 
 let undoHistory = [];
 
 
 /* ==========================================
-   OPEN PDF
+   FILE INPUT
 ========================================== */
 
 fileInput.addEventListener(
   "change",
-  function(event) {
+  function (event) {
 
     const file =
       event.target.files[0];
@@ -105,7 +108,7 @@ fileInput.addEventListener(
 
 dropZone.addEventListener(
   "dragover",
-  function(event) {
+  function (event) {
 
     event.preventDefault();
 
@@ -119,7 +122,7 @@ dropZone.addEventListener(
 
 dropZone.addEventListener(
   "dragleave",
-  function() {
+  function () {
 
     dropZone.classList.remove(
       "dragover"
@@ -131,7 +134,7 @@ dropZone.addEventListener(
 
 dropZone.addEventListener(
   "drop",
-  function(event) {
+  function (event) {
 
     event.preventDefault();
 
@@ -151,11 +154,10 @@ dropZone.addEventListener(
 
       openPDF(file);
 
-    }
-    else {
+    } else {
 
       alert(
-        "Please select a PDF file."
+        "Please select a valid PDF file."
       );
 
     }
@@ -165,21 +167,26 @@ dropZone.addEventListener(
 
 
 /* ==========================================
-   OPEN PDF FUNCTION
+   OPEN PDF
 ========================================== */
 
 async function openPDF(file) {
 
   try {
 
+    /*
+      Read PDF into browser memory.
+    */
+
     originalPDFBytes =
       await file.arrayBuffer();
 
 
     /*
-      PDF.js gets a COPY of the bytes.
-      The original data remains available
-      for pdf-lib when downloading.
+      PDF.js gets a copy.
+
+      The PDF is NOT uploaded
+      to our server.
     */
 
     pdfViewer =
@@ -200,12 +207,17 @@ async function openPDF(file) {
 
     textObjects = {};
 
-    undoHistory = [];
-
     selectedText = null;
 
+    undoHistory = [];
 
-    homeScreen.classList.add(
+
+    /*
+      Switch from upload screen
+      to editor.
+    */
+
+    uploadScreen.classList.add(
       "hidden"
     );
 
@@ -217,8 +229,7 @@ async function openPDF(file) {
     await renderPage();
 
 
-  }
-  catch (error) {
+  } catch (error) {
 
     console.error(error);
 
@@ -232,7 +243,7 @@ async function openPDF(file) {
 
 
 /* ==========================================
-   RENDER PAGE
+   RENDER PDF PAGE
 ========================================== */
 
 async function renderPage() {
@@ -251,10 +262,15 @@ async function renderPage() {
   const viewport =
     page.getViewport({
 
-      scale: scale
+      scale:
+        scale
 
     });
 
+
+  /*
+    Set canvas size.
+  */
 
   pdfCanvas.width =
     viewport.width;
@@ -263,12 +279,20 @@ async function renderPage() {
     viewport.height;
 
 
-  pdfWrapper.style.width =
+  /*
+    Set wrapper size.
+  */
+
+  pdfPage.style.width =
     viewport.width + "px";
 
-  pdfWrapper.style.height =
+  pdfPage.style.height =
     viewport.height + "px";
 
+
+  /*
+    Text layer size.
+  */
 
   textLayer.style.width =
     viewport.width + "px";
@@ -276,6 +300,10 @@ async function renderPage() {
   textLayer.style.height =
     viewport.height + "px";
 
+
+  /*
+    Render PDF.
+  */
 
   await page.render({
 
@@ -290,6 +318,7 @@ async function renderPage() {
 
   updatePageInfo();
 
+  updateZoomText();
 
   renderTextObjects();
 
@@ -297,13 +326,13 @@ async function renderPage() {
 
 
 /* ==========================================
-   PAGE INFO
+   PAGE INFORMATION
 ========================================== */
 
 function updatePageInfo() {
 
   document.getElementById(
-    "pageInfo"
+    "pageNumber"
   ).textContent =
     currentPage +
     " / " +
@@ -320,7 +349,7 @@ document.getElementById(
   "nextPage"
 ).addEventListener(
   "click",
-  async function() {
+  async function () {
 
     if (
       currentPage <
@@ -344,12 +373,14 @@ document.getElementById(
 ========================================== */
 
 document.getElementById(
-  "prevPage"
+  "previousPage"
 ).addEventListener(
   "click",
-  async function() {
+  async function () {
 
-    if (currentPage > 1) {
+    if (
+      currentPage > 1
+    ) {
 
       currentPage--;
 
@@ -368,14 +399,12 @@ document.getElementById(
 ========================================== */
 
 document.getElementById(
-  "zoomIn"
+  "zoomPlus"
 ).addEventListener(
   "click",
-  async function() {
+  async function () {
 
     scale += 0.15;
-
-    updateZoom();
 
     await renderPage();
 
@@ -388,18 +417,21 @@ document.getElementById(
 ========================================== */
 
 document.getElementById(
-  "zoomOut"
+  "zoomMinus"
 ).addEventListener(
   "click",
-  async function() {
+  async function () {
 
-    if (scale <= 0.4) {
+    if (
+      scale <= 0.4
+    ) {
+
       return;
+
     }
 
-    scale -= 0.15;
 
-    updateZoom();
+    scale -= 0.15;
 
     await renderPage();
 
@@ -408,54 +440,62 @@ document.getElementById(
 
 
 /* ==========================================
-   UPDATE ZOOM
+   ZOOM DISPLAY
 ========================================== */
 
-function updateZoom() {
+function updateZoomText() {
 
   document.getElementById(
-    "zoomLevel"
+    "zoomValue"
   ).textContent =
     Math.round(
       scale * 100
-    ) + "%";
+    ) +
+    "%";
 
 }
 
 
 /* ==========================================
-   ADD TEXT
+   ADD TEXT BUTTON
 ========================================== */
 
 document.getElementById(
-  "addText"
+  "textTool"
 ).addEventListener(
   "click",
-  function() {
+  function () {
 
-    addText();
+    addTextObject();
 
   }
 );
 
 
 /* ==========================================
-   ADD TEXT FUNCTION
+   ADD TEXT OBJECT
 ========================================== */
 
-function addText() {
+function addTextObject() {
 
-  if (!textObjects[currentPage]) {
+  if (
+    !textObjects[currentPage]
+  ) {
 
-    textObjects[currentPage] = [];
+    textObjects[currentPage] =
+      [];
 
   }
 
 
+  /*
+    Save state before editing.
+  */
+
   saveUndo();
 
 
-  const textObject = {
+  const object = {
 
     id:
       Date.now(),
@@ -478,7 +518,7 @@ function addText() {
   textObjects[
     currentPage
   ].push(
-    textObject
+    object
   );
 
 
@@ -486,7 +526,7 @@ function addText() {
 
 
   /*
-    Automatically select the new text.
+    Select newly created text.
   */
 
   const inputs =
@@ -495,17 +535,17 @@ function addText() {
     );
 
 
-  const last =
+  const lastInput =
     inputs[
       inputs.length - 1
     ];
 
 
-  if (last) {
+  if (lastInput) {
 
-    last.focus();
+    lastInput.focus();
 
-    last.select();
+    lastInput.select();
 
   }
 
@@ -513,7 +553,7 @@ function addText() {
 
 
 /* ==========================================
-   RENDER TEXT OBJECTS
+   RENDER TEXT
 ========================================== */
 
 function renderTextObjects() {
@@ -524,11 +564,13 @@ function renderTextObjects() {
 
 
   const objects =
-    textObjects[currentPage] || [];
+    textObjects[
+      currentPage
+    ] || [];
 
 
   objects.forEach(
-    function(obj) {
+    function (object) {
 
       const input =
         document.createElement(
@@ -545,57 +587,79 @@ function renderTextObjects() {
 
 
       input.value =
-        obj.text;
+        object.text;
 
 
       input.dataset.id =
-        obj.id;
+        object.id;
 
 
       /*
-        Screen coordinates.
+        Convert PDF coordinates
+        to screen coordinates.
       */
 
       input.style.left =
-        (obj.x * scale) + "px";
+        (
+          object.x *
+          scale
+        ) +
+        "px";
 
 
       input.style.top =
-        (obj.y * scale) + "px";
+        (
+          object.y *
+          scale
+        ) +
+        "px";
 
 
       input.style.fontSize =
-        (obj.fontSize * scale) + "px";
+        (
+          object.fontSize *
+          scale
+        ) +
+        "px";
 
+
+      /*
+        Text width.
+      */
 
       input.style.width =
         Math.max(
           100,
-          obj.text.length * 10
-        ) + "px";
+          object.text.length * 10
+        ) +
+        "px";
 
 
-      /* Text changed */
+      /* -------------------------
+         TEXT CHANGE
+      ------------------------- */
 
       input.addEventListener(
         "input",
-        function() {
+        function () {
 
-          obj.text =
+          object.text =
             input.value;
 
         }
       );
 
 
-      /* Selection */
+      /* -------------------------
+         SELECT
+      ------------------------- */
 
       input.addEventListener(
         "focus",
-        function() {
+        function () {
 
           selectedText =
-            obj;
+            object;
 
           input.classList.add(
             "selected"
@@ -606,10 +670,13 @@ function renderTextObjects() {
 
 
       input.addEventListener(
-        "blur",
-        function() {
+        "click",
+        function () {
 
-          input.classList.remove(
+          selectedText =
+            object;
+
+          input.classList.add(
             "selected"
           );
 
@@ -617,13 +684,13 @@ function renderTextObjects() {
       );
 
 
-      /*
-        Drag support
-      */
+      /* -------------------------
+         DRAG
+      ------------------------- */
 
       makeDraggable(
         input,
-        obj
+        object
       );
 
 
@@ -648,24 +715,40 @@ function makeDraggable(
 
   let dragging = false;
 
-  let offsetX = 0;
+  let startX = 0;
 
-  let offsetY = 0;
+  let startY = 0;
 
 
   element.addEventListener(
     "mousedown",
-    function(event) {
+    function (event) {
 
       /*
-        Don't start dragging when
-        user is selecting/editing text.
+        Ignore right mouse button.
       */
 
       if (
-        event.detail > 1
+        event.button !== 0
       ) {
+
         return;
+
+      }
+
+
+      /*
+        If clicking inside the
+        text input, allow editing.
+      */
+
+      if (
+        document.activeElement ===
+        element
+      ) {
+
+        return;
+
       }
 
 
@@ -676,14 +759,18 @@ function makeDraggable(
         element.getBoundingClientRect();
 
 
-      offsetX =
+      startX =
         event.clientX -
         rect.left;
 
 
-      offsetY =
+      startY =
         event.clientY -
         rect.top;
+
+
+      selectedText =
+        object;
 
 
       event.preventDefault();
@@ -694,7 +781,7 @@ function makeDraggable(
 
   document.addEventListener(
     "mousemove",
-    function(event) {
+    function (event) {
 
       if (!dragging) {
         return;
@@ -705,39 +792,45 @@ function makeDraggable(
         textLayer.getBoundingClientRect();
 
 
-      const newX =
+      const screenX =
         event.clientX -
         layerRect.left -
-        offsetX;
+        startX;
 
 
-      const newY =
+      const screenY =
         event.clientY -
         layerRect.top -
-        offsetY;
+        startY;
 
 
       object.x =
         Math.max(
           0,
-          newX / scale
+          screenX / scale
         );
 
 
       object.y =
         Math.max(
           0,
-          newY / scale
+          screenY / scale
         );
 
 
       element.style.left =
-        object.x * scale +
+        (
+          object.x *
+          scale
+        ) +
         "px";
 
 
       element.style.top =
-        object.y * scale +
+        (
+          object.y *
+          scale
+        ) +
         "px";
 
     }
@@ -746,7 +839,7 @@ function makeDraggable(
 
   document.addEventListener(
     "mouseup",
-    function() {
+    function () {
 
       dragging = false;
 
@@ -757,14 +850,14 @@ function makeDraggable(
 
 
 /* ==========================================
-   DELETE SELECTED TEXT
+   DELETE TEXT
 ========================================== */
 
 document.getElementById(
-  "deleteSelected"
+  "deleteTool"
 ).addEventListener(
   "click",
-  function() {
+  function () {
 
     if (!selectedText) {
 
@@ -781,20 +874,19 @@ document.getElementById(
 
 
     const objects =
-      textObjects[currentPage];
+      textObjects[
+        currentPage
+      ] || [];
 
 
-    if (!objects) {
-      return;
-    }
-
-
-    textObjects[currentPage] =
+    textObjects[
+      currentPage
+    ] =
       objects.filter(
-        function(obj) {
+        function (object) {
 
           return (
-            obj.id !==
+            object.id !==
             selectedText.id
           );
 
@@ -817,19 +909,15 @@ document.getElementById(
 
 function saveUndo() {
 
-  const snapshot =
+  undoHistory.push(
     JSON.stringify(
       textObjects
-    );
-
-
-  undoHistory.push(
-    snapshot
+    )
   );
 
 
   /*
-    Keep history manageable.
+    Keep maximum 30 states.
   */
 
   if (
@@ -848,10 +936,10 @@ function saveUndo() {
 ========================================== */
 
 document.getElementById(
-  "undoButton"
+  "undoTool"
 ).addEventListener(
   "click",
-  function() {
+  function () {
 
     if (
       undoHistory.length === 0
@@ -862,14 +950,17 @@ document.getElementById(
     }
 
 
-    const previous =
+    const previousState =
       undoHistory.pop();
 
 
     textObjects =
       JSON.parse(
-        previous
+        previousState
       );
+
+
+    selectedText = null;
 
 
     renderTextObjects();
@@ -883,10 +974,10 @@ document.getElementById(
 ========================================== */
 
 document.getElementById(
-  "openAnother"
+  "openButton"
 ).addEventListener(
   "click",
-  function() {
+  function () {
 
     fileInput.value = "";
 
@@ -901,12 +992,16 @@ document.getElementById(
 ========================================== */
 
 document.getElementById(
-  "downloadPDF"
+  "downloadButton"
 ).addEventListener(
   "click",
-  async function() {
+  async function () {
 
     if (!originalPDFBytes) {
+
+      alert(
+        "No PDF is open."
+      );
 
       return;
 
@@ -915,11 +1010,20 @@ document.getElementById(
 
     try {
 
+      /*
+        Load original PDF
+        completely in browser.
+      */
+
       const pdf =
         await PDFDocument.load(
           originalPDFBytes
         );
 
+
+      /*
+        Embed standard Helvetica font.
+      */
 
       const font =
         await pdf.embedFont(
@@ -932,7 +1036,7 @@ document.getElementById(
 
 
       /*
-        Add text to every page.
+        Process every page.
       */
 
       for (
@@ -967,11 +1071,15 @@ document.getElementById(
 
 
         objects.forEach(
-          function(obj) {
+          function (object) {
+
+            const text =
+              object.text;
+
 
             if (
-              !obj.text ||
-              obj.text.trim() === ""
+              !text ||
+              !text.trim()
             ) {
 
               return;
@@ -980,32 +1088,37 @@ document.getElementById(
 
 
             /*
-              Convert screen coordinates
-              back to PDF coordinates.
+              Convert coordinates.
+
+              Browser:
+              top -> down
+
+              PDF:
+              bottom -> up
             */
 
-            const pdfX =
-              obj.x;
+            const x =
+              object.x;
 
 
-            const pdfY =
+            const y =
               pageHeight -
-              obj.y -
-              obj.fontSize;
+              object.y -
+              object.fontSize;
 
 
             page.drawText(
-              obj.text,
+              text,
               {
 
                 x:
-                  pdfX,
+                  x,
 
                 y:
-                  pdfY,
+                  y,
 
                 size:
-                  obj.fontSize,
+                  object.fontSize,
 
                 font:
                   font,
@@ -1027,16 +1140,20 @@ document.getElementById(
 
 
       /*
-        Save PDF.
+        Create new PDF.
       */
 
-      const newBytes =
+      const newPDF =
         await pdf.save();
 
 
+      /*
+        Create browser download.
+      */
+
       const blob =
         new Blob(
-          [newBytes],
+          [newPDF],
           {
             type:
               "application/pdf"
@@ -1076,7 +1193,7 @@ document.getElementById(
 
 
       setTimeout(
-        function() {
+        function () {
 
           URL.revokeObjectURL(
             url
