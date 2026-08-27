@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>My PDF Editor</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <!-- PDF-Lib -->
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+
+  <header>
+
+    <div class="logo">
+      My PDF Editor
+    </div>
+
+    <div class="privacy">
+      🔒 Files stay on your device
+    </div>
+
+  </header>
+
+
+  <!-- Upload Screen -->
+
+  <div id="uploadScreen" class="upload-screen">
+
+    <div class="upload-box" id="dropZone">
+
+      <div class="upload-icon">
+        📄
+      </div>
+
+      <h2>Open PDF</h2>
+
+      <p>
+        Select a PDF from your computer.
+        Your file will not be uploaded anywhere.
+      </p>
+
+      <label for="fileInput" class="upload-btn">
+        Choose PDF
+      </label>
+
+      <input
+        type="file"
+        id="fileInput"
+        accept="application/pdf"
+        hidden
+      >
+
+      <p class="drag-text">
+        or drag and drop PDF here
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- Editor -->
+
+  <div id="editorScreen" class="editor hidden">
+
+    <!-- Toolbar -->
+
+    <div class="toolbar">
+
+      <button id="prevPage">
+        ◀ Previous
+      </button>
+
+      <span id="pageInfo">
+        Page 1
+      </span>
+
+      <button id="nextPage">
+        Next ▶
+      </button>
+
+      <div class="separator"></div>
+
+      <button id="zoomOut">
+        −
+      </button>
+
+      <span id="zoomLevel">
+        100%
+      </span>
+
+      <button id="zoomIn">
+        +
+      </button>
+
+      <div class="separator"></div>
+
+      <button id="addText">
+        T Add Text
+      </button>
+
+      <div class="separator"></div>
+
+      <button id="downloadPDF" class="download-btn">
+        ⬇ Download
+      </button>
+
+    </div>
+
+
+    <!-- PDF Area -->
+
+    <div class="pdf-container">
+
+      <div id="pdfWrapper">
+
+        <canvas id="pdfCanvas"></canvas>
+
+        <div id="textLayer"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
