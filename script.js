@@ -1,54 +1,86 @@
-const { PDFDocument, rgb, StandardFonts } = PDFLib;
+/* ==========================================
+   SSPDF EDITOR
+   Client-side PDF editor
+========================================== */
 
 
-// PDF.js Worker
+const {
+  PDFDocument,
+  rgb,
+  StandardFonts
+} = PDFLib;
+
+
+/* PDF.js worker */
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 
-// Elements
+/* ==========================================
+   ELEMENTS
+========================================== */
 
-const fileInput = document.getElementById("fileInput");
-
-const uploadScreen =
-  document.getElementById("uploadScreen");
-
-const editorScreen =
-  document.getElementById("editorScreen");
+const fileInput =
+  document.getElementById("fileInput");
 
 const dropZone =
   document.getElementById("dropZone");
 
-const canvas =
+const homeScreen =
+  document.getElementById("homeScreen");
+
+const editorScreen =
+  document.getElementById("editorScreen");
+
+const pdfCanvas =
   document.getElementById("pdfCanvas");
 
-const ctx =
-  canvas.getContext("2d");
-
-const pageInfo =
-  document.getElementById("pageInfo");
+const pdfWrapper =
+  document.getElementById("pdfWrapper");
 
 const textLayer =
   document.getElementById("textLayer");
 
+const ctx =
+  pdfCanvas.getContext("2d");
 
-// PDF Variables
 
-let pdfBytes = null;
+/* ==========================================
+   STATE
+========================================== */
 
-let pdfDoc = null;
+let originalPDFBytes = null;
+
+let pdfViewer = null;
 
 let currentPage = 1;
 
 let totalPages = 0;
 
-let scale = 1.2;
+let scale = 1.25;
 
-let textElements = {};
+let selectedText = null;
 
 
-// Open File
+/*
+   Text objects are stored separately
+   for each PDF page.
+*/
+
+let textObjects = {};
+
+
+/*
+   Undo history
+*/
+
+let undoHistory = [];
+
+
+/* ==========================================
+   OPEN PDF
+========================================== */
 
 fileInput.addEventListener(
   "change",
@@ -57,17 +89,19 @@ fileInput.addEventListener(
     const file =
       event.target.files[0];
 
-    if (file) {
-
-      loadPDF(file);
-
+    if (!file) {
+      return;
     }
+
+    openPDF(file);
 
   }
 );
 
 
-// Drag and Drop
+/* ==========================================
+   DRAG & DROP
+========================================== */
 
 dropZone.addEventListener(
   "dragover",
@@ -75,7 +109,9 @@ dropZone.addEventListener(
 
     event.preventDefault();
 
-    dropZone.classList.add("dragover");
+    dropZone.classList.add(
+      "dragover"
+    );
 
   }
 );
@@ -85,7 +121,9 @@ dropZone.addEventListener(
   "dragleave",
   function() {
 
-    dropZone.classList.remove("dragover");
+    dropZone.classList.remove(
+      "dragover"
+    );
 
   }
 );
@@ -97,23 +135,27 @@ dropZone.addEventListener(
 
     event.preventDefault();
 
-    dropZone.classList.remove("dragover");
+    dropZone.classList.remove(
+      "dragover"
+    );
+
 
     const file =
       event.dataTransfer.files[0];
+
 
     if (
       file &&
       file.type === "application/pdf"
     ) {
 
-      loadPDF(file);
+      openPDF(file);
 
     }
     else {
 
       alert(
-        "Please select a valid PDF file."
+        "Please select a PDF file."
       );
 
     }
@@ -122,58 +164,110 @@ dropZone.addEventListener(
 );
 
 
-// Load PDF
+/* ==========================================
+   OPEN PDF FUNCTION
+========================================== */
 
-async function loadPDF(file) {
+async function openPDF(file) {
 
-  pdfBytes =
-    await file.arrayBuffer();
+  try {
 
-
-  pdfDoc =
-    await pdfjsLib.getDocument(
-      { data: pdfBytes.slice(0) }
-    ).promise;
+    originalPDFBytes =
+      await file.arrayBuffer();
 
 
-  totalPages =
-    pdfDoc.numPages;
+    /*
+      PDF.js gets a COPY of the bytes.
+      The original data remains available
+      for pdf-lib when downloading.
+    */
+
+    pdfViewer =
+      await pdfjsLib.getDocument({
+
+        data:
+          originalPDFBytes.slice(0)
+
+      }).promise;
 
 
-  currentPage = 1;
+    totalPages =
+      pdfViewer.numPages;
 
 
-  uploadScreen.classList.add("hidden");
-
-  editorScreen.classList.remove("hidden");
+    currentPage = 1;
 
 
-  renderPage();
+    textObjects = {};
+
+    undoHistory = [];
+
+    selectedText = null;
+
+
+    homeScreen.classList.add(
+      "hidden"
+    );
+
+    editorScreen.classList.remove(
+      "hidden"
+    );
+
+
+    await renderPage();
+
+
+  }
+  catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Unable to open this PDF."
+    );
+
+  }
 
 }
 
 
-// Render Page
+/* ==========================================
+   RENDER PAGE
+========================================== */
 
 async function renderPage() {
 
+  if (!pdfViewer) {
+    return;
+  }
+
+
   const page =
-    await pdfDoc.getPage(
+    await pdfViewer.getPage(
       currentPage
     );
 
 
   const viewport =
-    page.getViewport(
-      { scale: scale }
-    );
+    page.getViewport({
+
+      scale: scale
+
+    });
 
 
-  canvas.width =
+  pdfCanvas.width =
     viewport.width;
 
-  canvas.height =
+  pdfCanvas.height =
     viewport.height;
+
+
+  pdfWrapper.style.width =
+    viewport.width + "px";
+
+  pdfWrapper.style.height =
+    viewport.height + "px";
 
 
   textLayer.style.width =
@@ -185,52 +279,48 @@ async function renderPage() {
 
   await page.render({
 
-    canvasContext: ctx,
+    canvasContext:
+      ctx,
 
-    viewport: viewport
+    viewport:
+      viewport
 
   }).promise;
 
 
-  pageInfo.textContent =
-    "Page " +
-    currentPage +
-    " / " +
-    totalPages;
+  updatePageInfo();
 
 
-  showTexts();
+  renderTextObjects();
 
 }
 
 
-// Previous Page
+/* ==========================================
+   PAGE INFO
+========================================== */
 
-document.getElementById(
-  "prevPage"
-).addEventListener(
-  "click",
-  function() {
+function updatePageInfo() {
 
-    if (currentPage > 1) {
+  document.getElementById(
+    "pageInfo"
+  ).textContent =
+    currentPage +
+    " / " +
+    totalPages;
 
-      currentPage--;
-
-      renderPage();
-
-    }
-
-  }
-);
+}
 
 
-// Next Page
+/* ==========================================
+   NEXT PAGE
+========================================== */
 
 document.getElementById(
   "nextPage"
 ).addEventListener(
   "click",
-  function() {
+  async function() {
 
     if (
       currentPage <
@@ -239,7 +329,9 @@ document.getElementById(
 
       currentPage++;
 
-      renderPage();
+      selectedText = null;
+
+      await renderPage();
 
     }
 
@@ -247,57 +339,93 @@ document.getElementById(
 );
 
 
-// Zoom In
+/* ==========================================
+   PREVIOUS PAGE
+========================================== */
+
+document.getElementById(
+  "prevPage"
+).addEventListener(
+  "click",
+  async function() {
+
+    if (currentPage > 1) {
+
+      currentPage--;
+
+      selectedText = null;
+
+      await renderPage();
+
+    }
+
+  }
+);
+
+
+/* ==========================================
+   ZOOM IN
+========================================== */
 
 document.getElementById(
   "zoomIn"
 ).addEventListener(
   "click",
-  function() {
+  async function() {
 
-    scale += 0.2;
+    scale += 0.15;
 
     updateZoom();
 
-    renderPage();
+    await renderPage();
 
   }
 );
 
 
-// Zoom Out
+/* ==========================================
+   ZOOM OUT
+========================================== */
 
 document.getElementById(
   "zoomOut"
 ).addEventListener(
   "click",
-  function() {
+  async function() {
 
-    if (scale > 0.4) {
-
-      scale -= 0.2;
-
-      updateZoom();
-
-      renderPage();
-
+    if (scale <= 0.4) {
+      return;
     }
+
+    scale -= 0.15;
+
+    updateZoom();
+
+    await renderPage();
 
   }
 );
 
+
+/* ==========================================
+   UPDATE ZOOM
+========================================== */
 
 function updateZoom() {
 
   document.getElementById(
     "zoomLevel"
   ).textContent =
-    Math.round(scale * 100) + "%";
+    Math.round(
+      scale * 100
+    ) + "%";
 
 }
 
 
-// Add Text
+/* ==========================================
+   ADD TEXT
+========================================== */
 
 document.getElementById(
   "addText"
@@ -305,140 +433,472 @@ document.getElementById(
   "click",
   function() {
 
-    createTextElement();
+    addText();
 
   }
 );
 
 
-function createTextElement(
-  text = "Type here",
-  x = 100,
-  y = 100
-) {
+/* ==========================================
+   ADD TEXT FUNCTION
+========================================== */
 
-  const input =
-    document.createElement(
-      "input"
+function addText() {
+
+  if (!textObjects[currentPage]) {
+
+    textObjects[currentPage] = [];
+
+  }
+
+
+  saveUndo();
+
+
+  const textObject = {
+
+    id:
+      Date.now(),
+
+    text:
+      "Type here",
+
+    x:
+      80,
+
+    y:
+      80,
+
+    fontSize:
+      18
+
+  };
+
+
+  textObjects[
+    currentPage
+  ].push(
+    textObject
+  );
+
+
+  renderTextObjects();
+
+
+  /*
+    Automatically select the new text.
+  */
+
+  const inputs =
+    textLayer.querySelectorAll(
+      ".pdf-text"
     );
 
 
-  input.type = "text";
+  const last =
+    inputs[
+      inputs.length - 1
+    ];
 
 
-  input.value = text;
+  if (last) {
+
+    last.focus();
+
+    last.select();
+
+  }
+
+}
 
 
-  input.className =
-    "text-item";
+/* ==========================================
+   RENDER TEXT OBJECTS
+========================================== */
+
+function renderTextObjects() {
+
+  textLayer.innerHTML = "";
+
+  selectedText = null;
 
 
-  input.style.left =
-    x + "px";
+  const objects =
+    textObjects[currentPage] || [];
 
 
-  input.style.top =
-    y + "px";
+  objects.forEach(
+    function(obj) {
+
+      const input =
+        document.createElement(
+          "input"
+        );
 
 
-  input.draggable = true;
+      input.type =
+        "text";
 
 
-  input.addEventListener(
-    "dragstart",
-    function(event) {
+      input.className =
+        "pdf-text";
 
-      event.dataTransfer.setData(
-        "text/plain",
-        ""
+
+      input.value =
+        obj.text;
+
+
+      input.dataset.id =
+        obj.id;
+
+
+      /*
+        Screen coordinates.
+      */
+
+      input.style.left =
+        (obj.x * scale) + "px";
+
+
+      input.style.top =
+        (obj.y * scale) + "px";
+
+
+      input.style.fontSize =
+        (obj.fontSize * scale) + "px";
+
+
+      input.style.width =
+        Math.max(
+          100,
+          obj.text.length * 10
+        ) + "px";
+
+
+      /* Text changed */
+
+      input.addEventListener(
+        "input",
+        function() {
+
+          obj.text =
+            input.value;
+
+        }
+      );
+
+
+      /* Selection */
+
+      input.addEventListener(
+        "focus",
+        function() {
+
+          selectedText =
+            obj;
+
+          input.classList.add(
+            "selected"
+          );
+
+        }
+      );
+
+
+      input.addEventListener(
+        "blur",
+        function() {
+
+          input.classList.remove(
+            "selected"
+          );
+
+        }
+      );
+
+
+      /*
+        Drag support
+      */
+
+      makeDraggable(
+        input,
+        obj
+      );
+
+
+      textLayer.appendChild(
+        input
       );
 
     }
   );
 
+}
 
-  input.addEventListener(
-    "dragend",
+
+/* ==========================================
+   DRAG TEXT
+========================================== */
+
+function makeDraggable(
+  element,
+  object
+) {
+
+  let dragging = false;
+
+  let offsetX = 0;
+
+  let offsetY = 0;
+
+
+  element.addEventListener(
+    "mousedown",
     function(event) {
 
+      /*
+        Don't start dragging when
+        user is selecting/editing text.
+      */
+
+      if (
+        event.detail > 1
+      ) {
+        return;
+      }
+
+
+      dragging = true;
+
+
       const rect =
-        textLayer.getBoundingClientRect();
+        element.getBoundingClientRect();
 
 
-      let newX =
+      offsetX =
         event.clientX -
         rect.left;
 
 
-      let newY =
+      offsetY =
         event.clientY -
         rect.top;
 
 
-      input.style.left =
-        newX + "px";
-
-
-      input.style.top =
-        newY + "px";
+      event.preventDefault();
 
     }
   );
 
 
-  textLayer.appendChild(
-    input
-  );
+  document.addEventListener(
+    "mousemove",
+    function(event) {
+
+      if (!dragging) {
+        return;
+      }
 
 
-  if (!textElements[currentPage]) {
-
-    textElements[currentPage] = [];
-
-  }
+      const layerRect =
+        textLayer.getBoundingClientRect();
 
 
-  textElements[currentPage].push(
-    input
-  );
+      const newX =
+        event.clientX -
+        layerRect.left -
+        offsetX;
 
 
-  input.focus();
-
-  input.select();
-
-}
-
-
-// Show Texts for Current Page
-
-function showTexts() {
-
-  textLayer.innerHTML = "";
+      const newY =
+        event.clientY -
+        layerRect.top -
+        offsetY;
 
 
-  if (
-    textElements[currentPage]
-  ) {
-
-    textElements[
-      currentPage
-    ].forEach(
-      function(input) {
-
-        textLayer.appendChild(
-          input
+      object.x =
+        Math.max(
+          0,
+          newX / scale
         );
 
-      }
+
+      object.y =
+        Math.max(
+          0,
+          newY / scale
+        );
+
+
+      element.style.left =
+        object.x * scale +
+        "px";
+
+
+      element.style.top =
+        object.y * scale +
+        "px";
+
+    }
+  );
+
+
+  document.addEventListener(
+    "mouseup",
+    function() {
+
+      dragging = false;
+
+    }
+  );
+
+}
+
+
+/* ==========================================
+   DELETE SELECTED TEXT
+========================================== */
+
+document.getElementById(
+  "deleteSelected"
+).addEventListener(
+  "click",
+  function() {
+
+    if (!selectedText) {
+
+      alert(
+        "First select a text box."
+      );
+
+      return;
+
+    }
+
+
+    saveUndo();
+
+
+    const objects =
+      textObjects[currentPage];
+
+
+    if (!objects) {
+      return;
+    }
+
+
+    textObjects[currentPage] =
+      objects.filter(
+        function(obj) {
+
+          return (
+            obj.id !==
+            selectedText.id
+          );
+
+        }
+      );
+
+
+    selectedText = null;
+
+
+    renderTextObjects();
+
+  }
+);
+
+
+/* ==========================================
+   UNDO
+========================================== */
+
+function saveUndo() {
+
+  const snapshot =
+    JSON.stringify(
+      textObjects
     );
+
+
+  undoHistory.push(
+    snapshot
+  );
+
+
+  /*
+    Keep history manageable.
+  */
+
+  if (
+    undoHistory.length > 30
+  ) {
+
+    undoHistory.shift();
 
   }
 
 }
 
 
-// Download Edited PDF
+/* ==========================================
+   UNDO BUTTON
+========================================== */
+
+document.getElementById(
+  "undoButton"
+).addEventListener(
+  "click",
+  function() {
+
+    if (
+      undoHistory.length === 0
+    ) {
+
+      return;
+
+    }
+
+
+    const previous =
+      undoHistory.pop();
+
+
+    textObjects =
+      JSON.parse(
+        previous
+      );
+
+
+    renderTextObjects();
+
+  }
+);
+
+
+/* ==========================================
+   OPEN ANOTHER PDF
+========================================== */
+
+document.getElementById(
+  "openAnother"
+).addEventListener(
+  "click",
+  function() {
+
+    fileInput.value = "";
+
+    fileInput.click();
+
+  }
+);
+
+
+/* ==========================================
+   DOWNLOAD PDF
+========================================== */
 
 document.getElementById(
   "downloadPDF"
@@ -446,11 +906,24 @@ document.getElementById(
   "click",
   async function() {
 
+    if (!originalPDFBytes) {
+
+      return;
+
+    }
+
+
     try {
 
       const pdf =
         await PDFDocument.load(
-          pdfBytes
+          originalPDFBytes
+        );
+
+
+      const font =
+        await pdf.embedFont(
+          StandardFonts.Helvetica
         );
 
 
@@ -458,11 +931,30 @@ document.getElementById(
         pdf.getPages();
 
 
+      /*
+        Add text to every page.
+      */
+
       for (
         let pageNumber = 1;
         pageNumber <= totalPages;
         pageNumber++
       ) {
+
+        const objects =
+          textObjects[
+            pageNumber
+          ] || [];
+
+
+        if (
+          objects.length === 0
+        ) {
+
+          continue;
+
+        }
+
 
         const page =
           pages[
@@ -474,73 +966,77 @@ document.getElementById(
           page.getHeight();
 
 
-        if (
-          textElements[
-            pageNumber
-          ]
-        ) {
+        objects.forEach(
+          function(obj) {
 
-          textElements[
-            pageNumber
-          ].forEach(
-            function(input) {
+            if (
+              !obj.text ||
+              obj.text.trim() === ""
+            ) {
 
-              const text =
-                input.value;
+              return;
+
+            }
 
 
-              const x =
-                parseFloat(
-                  input.style.left
-                ) / scale;
+            /*
+              Convert screen coordinates
+              back to PDF coordinates.
+            */
+
+            const pdfX =
+              obj.x;
 
 
-              const yFromTop =
-                parseFloat(
-                  input.style.top
-                ) / scale;
+            const pdfY =
+              pageHeight -
+              obj.y -
+              obj.fontSize;
 
 
-              const y =
-                pageHeight -
-                yFromTop -
-                20;
+            page.drawText(
+              obj.text,
+              {
 
+                x:
+                  pdfX,
 
-              page.drawText(
-                text,
-                {
+                y:
+                  pdfY,
 
-                  x: x,
+                size:
+                  obj.fontSize,
 
-                  y: y,
+                font:
+                  font,
 
-                  size: 16,
-
-                  color: rgb(
+                color:
+                  rgb(
                     0,
                     0,
                     0
                   )
 
-                }
-              );
+              }
+            );
 
-            }
-          );
-
-        }
+          }
+        );
 
       }
 
 
-      const newPdfBytes =
+      /*
+        Save PDF.
+      */
+
+      const newBytes =
         await pdf.save();
 
 
       const blob =
         new Blob(
-          [newPdfBytes],
+          [newBytes],
           {
             type:
               "application/pdf"
@@ -560,18 +1056,34 @@ document.getElementById(
         );
 
 
-      link.href = url;
+      link.href =
+        url;
 
 
       link.download =
-        "edited-document.pdf";
+        "SSPDF-edited.pdf";
+
+
+      document.body.appendChild(
+        link
+      );
 
 
       link.click();
 
 
-      URL.revokeObjectURL(
-        url
+      link.remove();
+
+
+      setTimeout(
+        function() {
+
+          URL.revokeObjectURL(
+            url
+          );
+
+        },
+        1000
       );
 
 
@@ -581,7 +1093,7 @@ document.getElementById(
       console.error(error);
 
       alert(
-        "PDF could not be saved."
+        "Could not create the edited PDF."
       );
 
     }
