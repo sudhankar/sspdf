@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>SSPDF Editor</title>
+  <title>SSPDF - PDF Editor</title>
 
   <link rel="stylesheet" href="style.css">
 
@@ -19,44 +19,38 @@
 
   <header class="topbar">
 
-    <div class="brand">
-      <span class="brand-icon">S</span>
+    <div class="logo">
+      <span class="logo-box">S</span>
       <span>SSPDF</span>
       <small>PDF Editor</small>
     </div>
 
     <div class="privacy">
-      🔒 Your files stay on your device
+      🔒 Files stay on your device
     </div>
 
   </header>
 
 
-  <!-- HOME / UPLOAD -->
+  <main id="uploadScreen" class="upload-screen">
 
-  <main id="homeScreen" class="home">
+    <div id="dropZone" class="drop-zone">
 
-    <div
-      id="dropZone"
-      class="drop-zone"
-    >
-
-      <div class="pdf-icon">PDF</div>
+      <div class="pdf-icon">
+        PDF
+      </div>
 
       <h1>Edit PDF Online</h1>
 
       <p>
-        Open a PDF and edit it directly in your browser.
+        Open your PDF and edit it directly in your browser.
       </p>
 
-      <p class="privacy-text">
-        Your PDF is processed locally and is never uploaded.
+      <p class="safe">
+        🔒 Your PDF is processed locally and is never uploaded.
       </p>
 
-      <label
-        for="fileInput"
-        class="primary-btn"
-      >
+      <label for="fileInput" class="choose-button">
         Choose PDF
       </label>
 
@@ -67,7 +61,7 @@
         hidden
       >
 
-      <div class="drop-hint">
+      <div class="drop-text">
         or drag & drop your PDF here
       </div>
 
@@ -76,95 +70,60 @@
   </main>
 
 
-  <!-- EDITOR -->
-
-  <main
-    id="editorScreen"
-    class="editor hidden"
-  >
+  <main id="editorScreen" class="editor hidden">
 
     <div class="toolbar">
 
-      <div class="tool-group">
+      <button id="openButton">
+        📂 Open
+      </button>
 
-        <button
-          id="openAnother"
-          title="Open another PDF"
-        >
-          📂 Open
-        </button>
+      <span class="divider"></span>
 
-      </div>
+      <button id="previousPage">
+        ◀
+      </button>
 
+      <span id="pageNumber">
+        1 / 1
+      </span>
 
-      <div class="tool-group">
+      <button id="nextPage">
+        ▶
+      </button>
 
-        <button id="prevPage">
-          ◀
-        </button>
+      <span class="divider"></span>
 
-        <span id="pageInfo">
-          1 / 1
-        </span>
+      <button id="zoomMinus">
+        −
+      </button>
 
-        <button id="nextPage">
-          ▶
-        </button>
+      <span id="zoomValue">
+        100%
+      </span>
 
-      </div>
+      <button id="zoomPlus">
+        +
+      </button>
 
+      <span class="divider"></span>
 
-      <div class="tool-group">
+      <button id="textTool">
+        T Text
+      </button>
 
-        <button id="zoomOut">
-          −
-        </button>
+      <button id="deleteTool">
+        🗑 Delete
+      </button>
 
-        <span id="zoomLevel">
-          100%
-        </span>
+      <button id="undoTool">
+        ↶ Undo
+      </button>
 
-        <button id="zoomIn">
-          +
-        </button>
+      <div class="toolbar-space"></div>
 
-      </div>
-
-
-      <div class="tool-group">
-
-        <button
-          id="addText"
-          class="tool-button"
-        >
-          T&nbsp; Text
-        </button>
-
-        <button
-          id="deleteSelected"
-          class="tool-button"
-        >
-          🗑 Delete
-        </button>
-
-        <button
-          id="undoButton"
-          class="tool-button"
-        >
-          ↶ Undo
-        </button>
-
-      </div>
-
-
-      <div class="toolbar-spacer"></div>
-
-
-      <button
-        id="downloadPDF"
-        class="download-button"
-      >
-        ⬇ Download PDF
+      <button id="downloadButton" class="download">
+        ⬇ Download
       </button>
 
     </div>
@@ -172,15 +131,9 @@
 
     <div class="workspace">
 
-      <div
-        id="pdfContainer"
-        class="pdf-container"
-      >
+      <div class="pdf-area">
 
-        <div
-          id="pdfWrapper"
-          class="pdf-wrapper"
-        >
+        <div id="pdfPage" class="pdf-page">
 
           <canvas id="pdfCanvas"></canvas>
 
