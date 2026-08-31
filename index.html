@@ -879,9 +879,35 @@
 <!-- PDF.JS LIBRARY -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
+        
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <script>
+
+  /* =========================================
+     SSPDF EDITOR - STEP 4
+     SAVE / DOWNLOAD PDF
+  ========================================= */
+
+
+  /* =========================================
+     GLOBAL VARIABLES
+  ========================================= */
+
+  let currentPDF = null;
+
+  let originalPDFBytes = null;
+
+  let zoomLevel = 1.3;
+
+  let pageRotations = {};
+
+  let deletedPages = new Set();
+
+  let selectedPage = 1;
+
+  let originalFileName = "document.pdf";
+
 
   /* =========================================
      PDF.JS WORKER
@@ -892,22 +918,7 @@
 
 
   /* =========================================
-     GLOBAL VARIABLES
-  ========================================= */
-
-  let currentPDF = null;
-
-  let zoomLevel = 1.3;
-
-  let pageRotations = {};
-
-  let deletedPages = new Set();
-
-  let selectedPage = 1;
-
-
-  /* =========================================
-     OPEN PDF BUTTON
+     OPEN PDF
   ========================================= */
 
   function openFile() {
@@ -956,18 +967,10 @@
       "change",
       async function () {
 
-        const file =
-          this.files[0];
+        const file = this.files[0];
 
+        if (!file) return;
 
-        if (!file) {
-
-          return;
-
-        }
-
-
-        /* Check file type */
 
         if (
           file.type !== "application/pdf" &&
@@ -986,9 +989,15 @@
         try {
 
           console.log(
-            "Opening PDF:",
+            "Opening:",
             file.name
           );
+
+
+          /* Save original filename */
+
+          originalFileName =
+            file.name;
 
 
           /* Read file locally */
@@ -997,24 +1006,29 @@
             await file.arrayBuffer();
 
 
+          /* Keep original bytes */
+
+          originalPDFBytes =
+            new Uint8Array(
+              arrayBuffer
+            );
+
+
           /* Load PDF */
 
           currentPDF =
             await pdfjsLib
               .getDocument({
-                data: arrayBuffer
+                data:
+                  originalPDFBytes
               })
               .promise;
 
 
           console.log(
-            "PDF loaded successfully"
-          );
-
-
-          console.log(
-            "Total pages:",
-            currentPDF.numPages
+            "PDF loaded:",
+            currentPDF.numPages,
+            "pages"
           );
 
 
@@ -1022,16 +1036,22 @@
 
           pageRotations = {};
 
-          deletedPages = new Set();
+          deletedPages =
+            new Set();
 
           selectedPage = 1;
 
           zoomLevel = 1.3;
 
 
-          /* Render PDF */
+          /* Render */
 
           await renderPDF();
+
+
+          /* Update document information */
+
+          updateDocumentInfo();
 
 
         } catch (error) {
@@ -1056,16 +1076,12 @@
 
 
   /* =========================================
-     RENDER COMPLETE PDF
+     RENDER PDF
   ========================================= */
 
   async function renderPDF() {
 
-    if (!currentPDF) {
-
-      return;
-
-    }
+    if (!currentPDF) return;
 
 
     const viewer =
@@ -1091,14 +1107,10 @@
     }
 
 
-    /* Clear old pages */
-
     viewer.innerHTML = "";
 
     thumbnails.innerHTML = "";
 
-
-    /* Render pages */
 
     for (
       let pageNumber = 1;
@@ -1107,10 +1119,10 @@
     ) {
 
 
-      /* Skip deleted pages */
-
       if (
-        deletedPages.has(pageNumber)
+        deletedPages.has(
+          pageNumber
+        )
       ) {
 
         continue;
@@ -1132,11 +1144,13 @@
 
     updateZoomText();
 
+    updateDocumentInfo();
+
   }
 
 
   /* =========================================
-     RENDER MAIN PDF PAGE
+     RENDER MAIN PAGE
   ========================================= */
 
   async function renderMainPage(
@@ -1157,14 +1171,14 @@
     const viewport =
       page.getViewport({
 
-        scale: zoomLevel,
+        scale:
+          zoomLevel,
 
-        rotation: rotation
+        rotation:
+          rotation
 
       });
 
-
-    /* Page wrapper */
 
     const wrapper =
       document.createElement(
@@ -1191,8 +1205,6 @@
     }
 
 
-    /* Page label */
-
     const label =
       document.createElement(
         "div"
@@ -1206,8 +1218,6 @@
     label.textContent =
       "Page " + pageNumber;
 
-
-    /* Canvas */
 
     const canvas =
       document.createElement(
@@ -1237,8 +1247,6 @@
       "auto";
 
 
-    /* Add elements */
-
     wrapper.appendChild(
       label
     );
@@ -1258,8 +1266,6 @@
       );
 
 
-    /* Render */
-
     await page.render({
 
       canvasContext:
@@ -1270,8 +1276,6 @@
 
     }).promise;
 
-
-    /* Select page */
 
     wrapper.addEventListener(
       "click",
@@ -1289,7 +1293,7 @@
 
 
   /* =========================================
-     CREATE PAGE THUMBNAIL
+     THUMBNAIL
   ========================================= */
 
   async function renderThumbnail(
@@ -1310,14 +1314,14 @@
     const viewport =
       page.getViewport({
 
-        scale: 0.25,
+        scale:
+          0.25,
 
-        rotation: rotation
+        rotation:
+          rotation
 
       });
 
-
-    /* Thumbnail box */
 
     const box =
       document.createElement(
@@ -1344,8 +1348,6 @@
     }
 
 
-    /* Thumbnail canvas */
-
     const canvas =
       document.createElement(
         "canvas"
@@ -1366,8 +1368,6 @@
       viewport.height;
 
 
-    /* Page number */
-
     const number =
       document.createElement(
         "div"
@@ -1382,8 +1382,6 @@
       "Page " + pageNumber;
 
 
-    /* Action buttons */
-
     const actions =
       document.createElement(
         "div"
@@ -1394,7 +1392,7 @@
       "page-actions";
 
 
-    /* Rotate button */
+    /* Rotate */
 
     const rotateButton =
       document.createElement(
@@ -1422,7 +1420,7 @@
       };
 
 
-    /* Delete button */
+    /* Delete */
 
     const deleteButton =
       document.createElement(
@@ -1450,8 +1448,6 @@
       };
 
 
-    /* Add buttons */
-
     actions.appendChild(
       rotateButton
     );
@@ -1461,8 +1457,6 @@
       deleteButton
     );
 
-
-    /* Add everything */
 
     box.appendChild(
       canvas
@@ -1488,8 +1482,6 @@
       );
 
 
-    /* Render thumbnail */
-
     await page.render({
 
       canvasContext:
@@ -1500,8 +1492,6 @@
 
     }).promise;
 
-
-    /* Thumbnail click */
 
     box.onclick =
       function () {
@@ -1557,7 +1547,7 @@
 
 
   /* =========================================
-     UPDATE SELECTED PAGE
+     SELECTED PAGE
   ========================================= */
 
   function updateSelectedPage() {
@@ -1672,11 +1662,7 @@
   ) {
 
 
-    if (!currentPDF) {
-
-      return;
-
-    }
+    if (!currentPDF) return;
 
 
     const remainingPages =
@@ -1684,8 +1670,6 @@
       deletedPages.size -
       1;
 
-
-    /* Don't delete last page */
 
     if (
       remainingPages < 1
@@ -1708,11 +1692,7 @@
       );
 
 
-    if (!confirmDelete) {
-
-      return;
-
-    }
+    if (!confirmDelete) return;
 
 
     deletedPages.add(
@@ -1720,26 +1700,20 @@
     );
 
 
-    /* Select another page */
+    /* Select another visible page */
 
-    if (
-      selectedPage === pageNumber
+    selectedPage = 1;
+
+
+    while (
+      deletedPages.has(
+        selectedPage
+      ) &&
+      selectedPage <=
+        currentPDF.numPages
     ) {
 
-      selectedPage = 1;
-
-
-      while (
-        deletedPages.has(
-          selectedPage
-        ) &&
-        selectedPage <=
-          currentPDF.numPages
-      ) {
-
-        selectedPage++;
-
-      }
+      selectedPage++;
 
     }
 
@@ -1755,12 +1729,7 @@
 
   async function zoomIn() {
 
-
-    if (!currentPDF) {
-
-      return;
-
-    }
+    if (!currentPDF) return;
 
 
     zoomLevel += 0.2;
@@ -1786,12 +1755,7 @@
 
   async function zoomOut() {
 
-
-    if (!currentPDF) {
-
-      return;
-
-    }
+    if (!currentPDF) return;
 
 
     zoomLevel -= 0.2;
@@ -1812,7 +1776,7 @@
 
 
   /* =========================================
-     UPDATE ZOOM DISPLAY
+     ZOOM TEXT
   ========================================= */
 
   function updateZoomText() {
@@ -1824,11 +1788,7 @@
       );
 
 
-    if (!zoomElement) {
-
-      return;
-
-    }
+    if (!zoomElement) return;
 
 
     const percent =
@@ -1849,12 +1809,7 @@
 
   async function fitToScreen() {
 
-
-    if (!currentPDF) {
-
-      return;
-
-    }
+    if (!currentPDF) return;
 
 
     zoomLevel =
@@ -1864,6 +1819,372 @@
     await renderPDF();
 
   }
+
+
+  /* =========================================
+     DOCUMENT INFORMATION
+  ========================================= */
+
+  function updateDocumentInfo() {
+
+
+    const visiblePages =
+      currentPDF
+        ? currentPDF.numPages -
+          deletedPages.size
+        : 0;
+
+
+    const cards =
+      document.querySelectorAll(
+        ".panel-card"
+      );
+
+
+    if (
+      cards.length >= 3 &&
+      currentPDF
+    ) {
+
+      cards[0].innerHTML =
+        "<strong>Pages</strong>" +
+        visiblePages;
+
+
+      cards[1].innerHTML =
+        "<strong>Zoom</strong>" +
+        Math.round(
+          (zoomLevel / 1.3) * 100
+        ) +
+        "%";
+
+
+      cards[2].innerHTML =
+        "<strong>File</strong>" +
+        originalFileName;
+
+    }
+
+  }
+
+
+  /* =========================================
+     SAVE PDF
+  ========================================= */
+
+  async function savePDF() {
+
+
+    if (
+      !originalPDFBytes ||
+      !currentPDF
+    ) {
+
+      alert(
+        "पहले कोई PDF खोलें।"
+      );
+
+      return;
+
+    }
+
+
+    try {
+
+
+      /* Show saving message */
+
+      const saveButton =
+        document.querySelector(
+          ".btn-primary"
+        );
+
+
+      const oldText =
+        saveButton
+          ? saveButton.innerHTML
+          : "";
+
+
+      if (saveButton) {
+
+        saveButton.innerHTML =
+          "⏳ Saving...";
+
+        saveButton.disabled =
+          true;
+
+      }
+
+
+      /* Load original PDF */
+
+      const sourcePDF =
+        await PDFLib.PDFDocument.load(
+          originalPDFBytes
+        );
+
+
+      /* Create new PDF */
+
+      const outputPDF =
+        await PDFLib.PDFDocument.create();
+
+
+      /* Page list */
+
+      const pageIndexes = [];
+
+
+      for (
+        let i = 0;
+        i < sourcePDF.getPageCount();
+        i++
+      ) {
+
+        const pageNumber =
+          i + 1;
+
+
+        if (
+          deletedPages.has(
+            pageNumber
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        pageIndexes.push(i);
+
+      }
+
+
+      /* Copy pages */
+
+      const copiedPages =
+        await outputPDF.copyPages(
+          sourcePDF,
+          pageIndexes
+        );
+
+
+      copiedPages.forEach(
+        function (
+          page,
+          index
+        ) {
+
+
+          const originalIndex =
+            pageIndexes[index];
+
+
+          const pageNumber =
+            originalIndex + 1;
+
+
+          const rotation =
+            pageRotations[
+              pageNumber
+            ] || 0;
+
+
+          /* Preserve original rotation */
+
+          const originalRotation =
+            page.getRotation()
+              ? page.getRotation().angle
+              : 0;
+
+
+          const finalRotation =
+            (
+              originalRotation +
+              rotation
+            ) % 360;
+
+
+          page.setRotation(
+            PDFLib.degrees(
+              finalRotation
+            )
+          );
+
+
+          outputPDF.addPage(
+            page
+          );
+
+        }
+      );
+
+
+      /* Save */
+
+      const pdfBytes =
+        await outputPDF.save();
+
+
+      /* Download */
+
+      const blob =
+        new Blob(
+          [pdfBytes],
+          {
+            type:
+              "application/pdf"
+          }
+        );
+
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+
+      link.href =
+        url;
+
+
+      /* Filename */
+
+      let newName =
+        originalFileName;
+
+
+      if (
+        newName
+          .toLowerCase()
+          .endsWith(".pdf")
+      ) {
+
+        newName =
+          newName.slice(
+            0,
+            -4
+          );
+
+      }
+
+
+      link.download =
+        newName +
+        "-edited.pdf";
+
+
+      document
+        .body
+        .appendChild(
+          link
+        );
+
+
+      link.click();
+
+
+      link.remove();
+
+
+      URL.revokeObjectURL(
+        url
+      );
+
+
+      /* Restore button */
+
+      if (saveButton) {
+
+        saveButton.innerHTML =
+          "✓ Saved";
+
+        setTimeout(
+          function () {
+
+            saveButton.innerHTML =
+              oldText;
+
+            saveButton.disabled =
+              false;
+
+          },
+          1800
+        );
+
+      }
+
+
+    } catch (error) {
+
+
+      console.error(
+        "SAVE ERROR:",
+        error
+      );
+
+
+      alert(
+        "PDF save करने में समस्या हुई।\n\n" +
+        error.message
+      );
+
+
+      const saveButton =
+        document.querySelector(
+          ".btn-primary"
+        );
+
+
+      if (saveButton) {
+
+        saveButton.disabled =
+          false;
+
+        saveButton.innerHTML =
+          "↓ Save PDF";
+
+      }
+
+    }
+
+  }
+
+
+  /* =========================================
+     SAVE BUTTON
+  ========================================= */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+      const saveButton =
+        document.querySelector(
+          ".btn-primary"
+        );
+
+
+      if (saveButton) {
+
+        saveButton.addEventListener(
+          "click",
+          savePDF
+        );
+
+      }
+
+    }
+  );
 
 
   /* =========================================
@@ -1889,7 +2210,21 @@
       }
 
 
-      /* + */
+      /* Ctrl + S */
+
+      if (
+        event.ctrlKey &&
+        event.key.toLowerCase() === "s"
+      ) {
+
+        event.preventDefault();
+
+        savePDF();
+
+      }
+
+
+      /* Zoom + */
 
       if (
         event.key === "+"
@@ -1900,7 +2235,7 @@
       }
 
 
-      /* - */
+      /* Zoom - */
 
       if (
         event.key === "-"
