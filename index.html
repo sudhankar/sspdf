@@ -1,157 +1,697 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>SSPDF - PDF Editor</title>
+  <title>SSPDF Editor</title>
 
-  <link rel="stylesheet" href="style.css">
+  <meta name="description" content="Free online PDF editor. Edit and manage PDF files privately in your browser.">
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  <!-- PDF-Lib -->
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fb;
+      color: #202124;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* =========================
+       TOP BAR
+    ========================= */
+
+    .topbar {
+      height: 64px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      position: relative;
+      z-index: 20;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 21px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .btn {
+      border: 1px solid #d9dee8;
+      background: white;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .btn:hover {
+      background: #f3f4f6;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+      border-color: #2563eb;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    /* =========================
+       MAIN AREA
+    ========================= */
+
+    .workspace {
+      height: calc(100vh - 64px);
+      display: flex;
+    }
+
+    /* =========================
+       LEFT SIDEBAR
+    ========================= */
+
+    .sidebar {
+      width: 190px;
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      padding: 16px 10px;
+      overflow-y: auto;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      margin: 4px 8px 12px;
+    }
+
+    .tool {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 11px 12px;
+      border-radius: 8px;
+      color: #374151;
+      font-size: 14px;
+      text-align: left;
+      margin-bottom: 3px;
+    }
+
+    .tool:hover {
+      background: #f3f4f6;
+    }
+
+    .tool.active {
+      background: #eff6ff;
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    .tool-icon {
+      width: 23px;
+      text-align: center;
+      font-size: 17px;
+    }
+
+    /* =========================
+       DOCUMENT AREA
+    ========================= */
+
+    .document-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .document-toolbar {
+      height: 54px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .small-btn {
+      width: 36px;
+      height: 34px;
+      border: 1px solid #e1e5eb;
+      background: white;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    .zoom-value {
+      min-width: 65px;
+      text-align: center;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .canvas-area {
+      flex: 1;
+      overflow: auto;
+      background: #e9edf3;
+      padding: 35px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    /* =========================
+       EMPTY STATE
+    ========================= */
+
+    .empty-state {
+      width: min(600px, 100%);
+      margin-top: 8vh;
+      background: white;
+      border-radius: 16px;
+      padding: 45px 30px;
+      text-align: center;
+      box-shadow: 0 8px 35px rgba(0,0,0,0.06);
+    }
+
+    .upload-icon {
+      width: 76px;
+      height: 76px;
+      margin: auto;
+      border-radius: 20px;
+      background: #eff6ff;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 35px;
+    }
+
+    .empty-state h1 {
+      font-size: 25px;
+      margin-top: 20px;
+      color: #111827;
+    }
+
+    .empty-state p {
+      margin: 12px auto 25px;
+      max-width: 440px;
+      color: #6b7280;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .choose-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 0;
+      background: #2563eb;
+      color: white;
+      padding: 12px 21px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .choose-btn:hover {
+      background: #1d4ed8;
+    }
+
+    .privacy {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    /* =========================
+       RIGHT PANEL
+    ========================= */
+
+    .right-panel {
+      width: 225px;
+      background: white;
+      border-left: 1px solid #e5e7eb;
+      padding: 18px 14px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #6b7280;
+      margin-bottom: 13px;
+    }
+
+    .panel-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .panel-card strong {
+      display: block;
+      color: #111827;
+      margin-bottom: 5px;
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    .mobile-menu {
+      display: none;
+    }
+
+    @media (max-width: 850px) {
+
+      body {
+        overflow: hidden;
+      }
+
+      .topbar {
+        height: 58px;
+        padding: 0 12px;
+      }
+
+      .logo {
+        font-size: 18px;
+      }
+
+      .logo-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+      }
+
+      .top-actions .desktop-btn {
+        display: none;
+      }
+
+      .mobile-menu {
+        display: block;
+        border: 0;
+        background: transparent;
+        font-size: 23px;
+        margin-right: 3px;
+      }
+
+      .workspace {
+        height: calc(100vh - 58px);
+      }
+
+      .sidebar {
+        position: fixed;
+        left: -250px;
+        top: 58px;
+        bottom: 0;
+        width: 230px;
+        z-index: 30;
+        box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+        transition: left 0.25s ease;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .right-panel {
+        display: none;
+      }
+
+      .document-toolbar {
+        height: 48px;
+      }
+
+      .canvas-area {
+        padding: 18px 10px 80px;
+      }
+
+      .empty-state {
+        margin-top: 7vh;
+        padding: 35px 18px;
+      }
+
+      .empty-state h1 {
+        font-size: 21px;
+      }
+
+      .empty-state p {
+        font-size: 13px;
+      }
+
+      .upload-icon {
+        width: 65px;
+        height: 65px;
+        font-size: 30px;
+      }
+
+      .mobile-bottom {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 62px;
+        background: white;
+        border-top: 1px solid #e5e7eb;
+        z-index: 20;
+        justify-content: space-around;
+        align-items: center;
+      }
+
+      .bottom-tool {
+        border: 0;
+        background: transparent;
+        font-size: 11px;
+        color: #4b5563;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .bottom-tool span:first-child {
+        font-size: 19px;
+      }
+    }
+
+    @media (min-width: 851px) {
+      .mobile-bottom {
+        display: none;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
+  <!-- TOP BAR -->
   <header class="topbar">
 
+    <button class="mobile-menu" onclick="toggleMenu()">
+      ☰
+    </button>
+
     <div class="logo">
-      <span class="logo-box">S</span>
-      <span>SSPDF</span>
-      <small>PDF Editor</small>
+      <div class="logo-icon">S</div>
+      SSPDF Editor
     </div>
 
-    <div class="privacy">
-      🔒 Files stay on your device
+    <div class="top-actions">
+
+      <button class="btn desktop-btn">
+        ↶ Undo
+      </button>
+
+      <button class="btn desktop-btn">
+        ↷ Redo
+      </button>
+
+      <button class="btn">
+        🖨 Print
+      </button>
+
+      <button class="btn btn-primary">
+        ↓ Save PDF
+      </button>
+
     </div>
 
   </header>
 
 
-  <main id="uploadScreen" class="upload-screen">
+  <main class="workspace">
 
-    <div id="dropZone" class="drop-zone">
+    <!-- LEFT SIDEBAR -->
 
-      <div class="pdf-icon">
-        PDF
+    <aside class="sidebar" id="sidebar">
+
+      <div class="sidebar-title">
+        PDF Tools
       </div>
 
-      <h1>Edit PDF Online</h1>
+      <button class="tool active">
+        <span class="tool-icon">📄</span>
+        Pages
+      </button>
 
-      <p>
-        Open your PDF and edit it directly in your browser.
-      </p>
+      <button class="tool">
+        <span class="tool-icon">✏️</span>
+        Edit Text
+      </button>
 
-      <p class="safe">
-        🔒 Your PDF is processed locally and is never uploaded.
-      </p>
+      <button class="tool">
+        <span class="tool-icon">🖍️</span>
+        Highlight
+      </button>
 
-      <label for="fileInput" class="choose-button">
-        Choose PDF
-      </label>
+      <button class="tool">
+        <span class="tool-icon">T</span>
+        Text Box
+      </button>
 
-      <input
-        type="file"
-        id="fileInput"
-        accept="application/pdf"
-        hidden
-      >
+      <button class="tool">
+        <span class="tool-icon">✍️</span>
+        Signature
+      </button>
 
-      <div class="drop-text">
-        or drag & drop your PDF here
+      <button class="tool">
+        <span class="tool-icon">🖼️</span>
+        Image
+      </button>
+
+      <button class="tool">
+        <span class="tool-icon">↻</span>
+        Rotate
+      </button>
+
+      <button class="tool">
+        <span class="tool-icon">✂️</span>
+        Crop
+      </button>
+
+      <div class="sidebar-title" style="margin-top:22px;">
+        Organize
       </div>
 
-    </div>
-
-  </main>
-
-
-  <main id="editorScreen" class="editor hidden">
-
-    <div class="toolbar">
-
-      <button id="openButton">
-        📂 Open
+      <button class="tool">
+        <span class="tool-icon">➕</span>
+        Merge PDF
       </button>
 
-      <span class="divider"></span>
-
-      <button id="previousPage">
-        ◀
+      <button class="tool">
+        <span class="tool-icon">✂</span>
+        Split PDF
       </button>
 
-      <span id="pageNumber">
-        1 / 1
-      </span>
-
-      <button id="nextPage">
-        ▶
+      <button class="tool">
+        <span class="tool-icon">🗑️</span>
+        Delete Pages
       </button>
 
-      <span class="divider"></span>
-
-      <button id="zoomMinus">
-        −
+      <button class="tool">
+        <span class="tool-icon">↕️</span>
+        Reorder Pages
       </button>
 
-      <span id="zoomValue">
-        100%
-      </span>
-
-      <button id="zoomPlus">
-        +
-      </button>
-
-      <span class="divider"></span>
-
-      <button id="textTool">
-        T Text
-      </button>
-
-      <button id="deleteTool">
-        🗑 Delete
-      </button>
-
-      <button id="undoTool">
-        ↶ Undo
-      </button>
-
-      <div class="toolbar-space"></div>
-
-      <button id="downloadButton" class="download">
-        ⬇ Download
-      </button>
-
-    </div>
+    </aside>
 
 
-    <div class="workspace">
+    <!-- DOCUMENT AREA -->
 
-      <div class="pdf-area">
+    <section class="document-area">
 
-        <div id="pdfPage" class="pdf-page">
+      <div class="document-toolbar">
 
-          <canvas id="pdfCanvas"></canvas>
+        <button class="small-btn">−</button>
 
-          <div
-            id="textLayer"
-            class="text-layer"
-          ></div>
+        <div class="zoom-value">
+          100%
+        </div>
+
+        <button class="small-btn">+</button>
+
+        <button class="small-btn" title="Fit">
+          ⛶
+        </button>
+
+      </div>
+
+
+      <div class="canvas-area">
+
+        <div class="empty-state">
+
+          <div class="upload-icon">
+            📄
+          </div>
+
+          <h1>
+            Open a PDF to get started
+          </h1>
+
+          <p>
+            Edit, annotate, organize and manage your PDF files
+            directly in your browser.
+          </p>
+
+          <button class="choose-btn" onclick="openFile()">
+            📂 Choose PDF
+          </button>
+
+          <input
+            type="file"
+            id="pdfFile"
+            accept="application/pdf"
+            style="display:none"
+          >
+
+          <div class="privacy">
+            🔒 Your files stay on your device
+          </div>
 
         </div>
 
       </div>
 
-    </div>
+    </section>
+
+
+    <!-- RIGHT PANEL -->
+
+    <aside class="right-panel">
+
+      <div class="panel-title">
+        DOCUMENT
+      </div>
+
+      <div class="panel-card">
+        <strong>Pages</strong>
+        No PDF opened
+      </div>
+
+      <div class="panel-card">
+        <strong>Zoom</strong>
+        100%
+      </div>
+
+      <div class="panel-card">
+        <strong>File</strong>
+        No file selected
+      </div>
+
+    </aside>
 
   </main>
 
 
-  <script src="script.js"></script>
+  <!-- MOBILE BOTTOM TOOLBAR -->
+
+  <nav class="mobile-bottom">
+
+    <button class="bottom-tool">
+      <span>📄</span>
+      Pages
+    </button>
+
+    <button class="bottom-tool">
+      <span>✏️</span>
+      Edit
+    </button>
+
+    <button class="bottom-tool">
+      <span>🖍️</span>
+      Mark
+    </button>
+
+    <button class="bottom-tool">
+      <span>✍️</span>
+      Sign
+    </button>
+
+    <button class="bottom-tool" onclick="toggleMenu()">
+      <span>☰</span>
+      Tools
+    </button>
+
+  </nav>
+
+
+  <script>
+
+    function openFile() {
+      document.getElementById("pdfFile").click();
+    }
+
+    function toggleMenu() {
+      document.getElementById("sidebar").classList.toggle("open");
+    }
+
+    document.getElementById("pdfFile").addEventListener("change", function() {
+
+      if (this.files.length > 0) {
+
+        const file = this.files[0];
+
+        alert(
+          "PDF selected successfully!\\n\\n" +
+          file.name +
+          "\\n\\nPDF engine will be added in the next step."
+        );
+
+      }
+
+    });
+
+  </script>
 
 </body>
 </html>
+```
