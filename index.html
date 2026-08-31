@@ -663,33 +663,120 @@
   </nav>
 
 
-  <script>
+  <!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs"
+        type="module"></script>
 
-    function openFile() {
-      document.getElementById("pdfFile").click();
-    }
+<script type="module">
 
-    function toggleMenu() {
-      document.getElementById("sidebar").classList.toggle("open");
-    }
+  import * as pdfjsLib
+    from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
 
-    document.getElementById("pdfFile").addEventListener("change", function() {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
-      if (this.files.length > 0) {
 
-        const file = this.files[0];
+  function openFile() {
+    document.getElementById("pdfFile").click();
+  }
 
-        alert(
-          "PDF selected successfully!\\n\\n" +
-          file.name +
-          "\\n\\nPDF engine will be added in the next step."
-        );
+
+  function toggleMenu() {
+    document.getElementById("sidebar").classList.toggle("open");
+  }
+
+
+  const fileInput = document.getElementById("pdfFile");
+
+
+  fileInput.addEventListener("change", async function () {
+
+    const file = this.files[0];
+
+    if (!file) return;
+
+
+    try {
+
+      const arrayBuffer = await file.arrayBuffer();
+
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer
+      }).promise;
+
+
+      console.log("PDF loaded successfully");
+
+      console.log("Total pages:", pdf.numPages);
+
+
+      const canvasArea =
+        document.querySelector(".canvas-area");
+
+
+      canvasArea.innerHTML = "";
+
+
+      for (let pageNumber = 1;
+           pageNumber <= pdf.numPages;
+           pageNumber++) {
+
+        const page = await pdf.getPage(pageNumber);
+
+
+        const viewport =
+          page.getViewport({
+            scale: 1.3
+          });
+
+
+        const canvas =
+          document.createElement("canvas");
+
+
+        const context =
+          canvas.getContext("2d");
+
+
+        canvas.width =
+          viewport.width;
+
+        canvas.height =
+          viewport.height;
+
+
+        canvas.style.display = "block";
+        canvas.style.margin = "0 auto 25px";
+        canvas.style.background = "white";
+        canvas.style.boxShadow =
+          "0 4px 15px rgba(0,0,0,0.12)";
+
+
+        canvasArea.appendChild(canvas);
+
+
+        await page.render({
+          canvasContext: context,
+          viewport: viewport
+        }).promise;
 
       }
 
-    });
 
-  </script>
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "PDF खोलने में समस्या हुई।\n\n" +
+        error.message
+      );
+
+    }
+
+  });
+
+</script>
 
 </body>
 </html>
