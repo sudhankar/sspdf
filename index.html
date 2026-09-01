@@ -1141,1517 +1141,1447 @@ button{
      PDF.JS
 ===================================================== -->
 
-<script
-src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
-</script>
+<!-- =========================================
+     SSPDF EDITOR
+     PDF.JS + PDF-LIB
+     OPEN + THUMBNAILS + ZOOM
+     ROTATE + DELETE + SAVE
+========================================= -->
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-<!-- =====================================================
-     PDF-LIB
-===================================================== -->
-
-<script
-src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js">
-</script>
-
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
 <script>
 
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
+  /* =========================================
+     GLOBAL VARIABLES
+  ========================================= */
 
-let currentPDF = null;
+  let currentPDF = null;
 
-let originalPDFBytes = null;
+  let originalPDFBytes = null;
 
-let zoomLevel = 1.3;
+  let zoomLevel = 1.3;
 
-let pageRotations = {};
+  let pageRotations = {};
 
-let deletedPages = new Set();
+  let deletedPages = new Set();
 
-let selectedPage = 1;
+  let selectedPage = 1;
 
-let originalFileName = "document.pdf";
-
-
-/* =====================================================
-   PDF.JS WORKER
-===================================================== */
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  let originalFileName = "document.pdf";
 
 
-/* =====================================================
-   OPEN FILE
-===================================================== */
+  /* =========================================
+     PDF.JS WORKER
+  ========================================= */
 
-function openFile(){
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-  const fileInput =
+
+  /* =========================================
+     OPEN FILE
+  ========================================= */
+
+  function openFile() {
+
+    const fileInput =
+      document.getElementById("pdfFile");
+
+    if (fileInput) {
+      fileInput.click();
+    }
+
+  }
+
+
+  /* =========================================
+     MOBILE MENU
+  ========================================= */
+
+  function toggleMenu() {
+
+    const sidebar =
+      document.getElementById("sidebar");
+
+    if (sidebar) {
+      sidebar.classList.toggle("open");
+    }
+
+  }
+
+
+  /* =========================================
+     PDF FILE SELECTED
+  ========================================= */
+
+  const pdfFile =
     document.getElementById("pdfFile");
 
-  if(!fileInput){
 
-    alert("PDF file selector नहीं मिला।");
+  if (pdfFile) {
 
-    return;
-  }
+    pdfFile.addEventListener(
+      "change",
+      async function () {
 
-  /*
-    Important:
-    same PDF को दोबारा भी select करने देने के लिए
-    value खाली करते हैं।
-  */
+        const file = this.files[0];
 
-  fileInput.value = "";
-
-  fileInput.click();
-
-}
+        if (!file) return;
 
 
-/* =====================================================
-   FILE SELECTED
-===================================================== */
+        if (
+          file.type !== "application/pdf" &&
+          !file.name.toLowerCase().endsWith(".pdf")
+        ) {
 
-const pdfFile =
-document.getElementById("pdfFile");
+          alert(
+            "कृपया केवल PDF file चुनें।"
+          );
+
+          return;
+
+        }
 
 
-if(pdfFile){
+        try {
 
-  pdfFile.addEventListener(
-    "change",
-    async function(){
+          console.log(
+            "Opening:",
+            file.name
+          );
 
-      const file =
-        this.files[0];
 
-      if(!file){
-        return;
+          /* =================================
+             FILE NAME
+          ================================= */
+
+          originalFileName =
+            file.name;
+
+
+          /* =================================
+             READ FILE
+          ================================= */
+
+          const arrayBuffer =
+            await file.arrayBuffer();
+
+
+          /*
+             IMPORTANT FIX
+
+             Original bytes की अलग copy रखें।
+             PDF.js को दूसरी copy दें।
+          */
+
+          originalPDFBytes =
+            new Uint8Array(arrayBuffer);
+
+
+          const pdfJsBytes =
+            new Uint8Array(
+              originalPDFBytes
+            );
+
+
+          /* =================================
+             LOAD PDF.JS
+          ================================= */
+
+          currentPDF =
+            await pdfjsLib
+              .getDocument({
+                data: pdfJsBytes
+              })
+              .promise;
+
+
+          console.log(
+            "PDF loaded:",
+            currentPDF.numPages,
+            "pages"
+          );
+
+
+          /* =================================
+             RESET EDITOR
+          ================================= */
+
+          pageRotations = {};
+
+          deletedPages =
+            new Set();
+
+          selectedPage = 1;
+
+          zoomLevel = 1.3;
+
+
+          /* =================================
+             RENDER PDF
+          ================================= */
+
+          await renderPDF();
+
+
+          /* =================================
+             UPDATE INFORMATION
+          ================================= */
+
+          updateDocumentInfo();
+
+
+        } catch (error) {
+
+          console.error(
+            "PDF ERROR:",
+            error
+          );
+
+
+          alert(
+            "PDF खोलने में समस्या हुई।\n\n" +
+            error.message
+          );
+
+        }
+
       }
-
-
-      if(
-        file.type !== "application/pdf" &&
-        !file.name.toLowerCase().endsWith(".pdf")
-      ){
-
-        alert(
-          "कृपया केवल PDF file चुनें।"
-        );
-
-        return;
-      }
-
-
-      try{
-
-        originalFileName =
-          file.name;
-
-
-        const arrayBuffer =
-          await file.arrayBuffer();
-
-
-        originalPDFBytes =
-          new Uint8Array(arrayBuffer);
-
-
-        currentPDF =
-          await pdfjsLib
-          .getDocument({
-            data:originalPDFBytes
-          })
-          .promise;
-
-
-        pageRotations = {};
-
-        deletedPages =
-          new Set();
-
-        selectedPage = 1;
-
-        zoomLevel = 1.3;
-
-
-        await renderPDF();
-
-
-        updateDocumentInfo();
-
-
-      }
-      catch(error){
-
-        console.error(
-          "PDF ERROR:",
-          error
-        );
-
-
-        alert(
-          "PDF खोलने में समस्या हुई.\n\n" +
-          error.message
-        );
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   RENDER PDF
-===================================================== */
-
-async function renderPDF(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  const viewer =
-    document.getElementById(
-      "pdfViewer"
     );
 
-
-  const thumbnails =
-    document.getElementById(
-      "thumbnails"
-    );
-
-
-  if(!viewer || !thumbnails){
-
-    alert(
-      "PDF viewer element नहीं मिला।"
-    );
-
-    return;
   }
 
 
-  /*
-    केवल PDF pages हटेंगे।
-    File input सुरक्षित रहेगा क्योंकि
-    वह pdfViewer के बाहर है।
-  */
+  /* =========================================
+     RENDER COMPLETE PDF
+  ========================================= */
 
-  viewer.innerHTML = "";
+  async function renderPDF() {
 
-
-  thumbnails.innerHTML = "";
+    if (!currentPDF) return;
 
 
-  for(
-    let pageNumber = 1;
-    pageNumber <= currentPDF.numPages;
-    pageNumber++
-  ){
+    const viewer =
+      document.getElementById(
+        "pdfViewer"
+      );
 
-    if(
-      deletedPages.has(pageNumber)
-    ){
 
-      continue;
+    const thumbnails =
+      document.getElementById(
+        "thumbnails"
+      );
+
+
+    if (!viewer || !thumbnails) {
+
+      alert(
+        "PDF viewer element नहीं मिला।"
+      );
+
+      return;
 
     }
 
 
-    await renderMainPage(
-      pageNumber
-    );
+    viewer.innerHTML = "";
 
+    thumbnails.innerHTML = "";
 
-    await renderThumbnail(
-      pageNumber
-    );
 
-  }
+    for (
+      let pageNumber = 1;
+      pageNumber <= currentPDF.numPages;
+      pageNumber++
+    ) {
 
+      if (
+        deletedPages.has(
+          pageNumber
+        )
+      ) {
+        continue;
+      }
 
-  updateZoomText();
 
-  updateDocumentInfo();
-
-}
-
-
-/* =====================================================
-   MAIN PAGE
-===================================================== */
-
-async function renderMainPage(
-  pageNumber
-){
-
-  const page =
-    await currentPDF.getPage(
-      pageNumber
-    );
-
-
-  const rotation =
-    pageRotations[pageNumber] || 0;
-
-
-  const viewport =
-    page.getViewport({
-
-      scale:zoomLevel,
-
-      rotation:rotation
-
-    });
-
-
-  const wrapper =
-    document.createElement("div");
-
-
-  wrapper.className =
-    "pdf-page-wrapper";
-
-
-  wrapper.dataset.page =
-    pageNumber;
-
-
-  if(
-    pageNumber === selectedPage
-  ){
-
-    wrapper.classList.add(
-      "selected-page"
-    );
-
-  }
-
-
-  const label =
-    document.createElement("div");
-
-
-  label.className =
-    "page-label";
-
-
-  label.textContent =
-    "Page " + pageNumber;
-
-
-  const canvas =
-    document.createElement("canvas");
-
-
-  const context =
-    canvas.getContext("2d");
-
-
-  canvas.width =
-    viewport.width;
-
-
-  canvas.height =
-    viewport.height;
-
-
-  canvas.style.maxWidth =
-    "100%";
-
-
-  canvas.style.height =
-    "auto";
-
-
-  wrapper.appendChild(label);
-
-  wrapper.appendChild(canvas);
-
-
-  document
-  .getElementById("pdfViewer")
-  .appendChild(wrapper);
-
-
-  await page.render({
-
-    canvasContext:context,
-
-    viewport:viewport
-
-  }).promise;
-
-
-  wrapper.addEventListener(
-    "click",
-    function(){
-
-      selectedPage =
-        pageNumber;
-
-      updateSelectedPage();
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   THUMBNAIL
-===================================================== */
-
-async function renderThumbnail(
-  pageNumber
-){
-
-  const page =
-    await currentPDF.getPage(
-      pageNumber
-    );
-
-
-  const rotation =
-    pageRotations[pageNumber] || 0;
-
-
-  const viewport =
-    page.getViewport({
-
-      scale:.25,
-
-      rotation:rotation
-
-    });
-
-
-  const box =
-    document.createElement("div");
-
-
-  box.className =
-    "page-thumbnail";
-
-
-  box.dataset.page =
-    pageNumber;
-
-
-  if(
-    pageNumber === selectedPage
-  ){
-
-    box.classList.add(
-      "active"
-    );
-
-  }
-
-
-  const canvas =
-    document.createElement("canvas");
-
-
-  const context =
-    canvas.getContext("2d");
-
-
-  canvas.width =
-    viewport.width;
-
-
-  canvas.height =
-    viewport.height;
-
-
-  const number =
-    document.createElement("div");
-
-
-  number.className =
-    "page-number";
-
-
-  number.textContent =
-    "Page " + pageNumber;
-
-
-  const actions =
-    document.createElement("div");
-
-
-  actions.className =
-    "page-actions";
-
-
-  /* ROTATE */
-
-  const rotateButton =
-    document.createElement("button");
-
-
-  rotateButton.innerHTML =
-    "↻";
-
-
-  rotateButton.title =
-    "Rotate page";
-
-
-  rotateButton.onclick =
-    function(event){
-
-      event.stopPropagation();
-
-      rotatePage(pageNumber);
-
-    };
-
-
-  /* DELETE */
-
-  const deleteButton =
-    document.createElement("button");
-
-
-  deleteButton.innerHTML =
-    "🗑";
-
-
-  deleteButton.title =
-    "Delete page";
-
-
-  deleteButton.onclick =
-    function(event){
-
-      event.stopPropagation();
-
-      deletePage(pageNumber);
-
-    };
-
-
-  actions.appendChild(
-    rotateButton
-  );
-
-
-  actions.appendChild(
-    deleteButton
-  );
-
-
-  box.appendChild(canvas);
-
-  box.appendChild(number);
-
-  box.appendChild(actions);
-
-
-  document
-  .getElementById("thumbnails")
-  .appendChild(box);
-
-
-  await page.render({
-
-    canvasContext:context,
-
-    viewport:viewport
-
-  }).promise;
-
-
-  box.onclick =
-    function(){
-
-      selectedPage =
-        pageNumber;
-
-
-      scrollToPage(
+      await renderMainPage(
         pageNumber
       );
 
 
-      updateSelectedPage();
+      await renderThumbnail(
+        pageNumber
+      );
 
-    };
-
-}
-
-
-/* =====================================================
-   SCROLL TO PAGE
-===================================================== */
-
-function scrollToPage(
-  pageNumber
-){
-
-  const page =
-    document.querySelector(
-      '.pdf-page-wrapper[data-page="' +
-      pageNumber +
-      '"]'
-    );
+    }
 
 
-  if(page){
+    updateZoomText();
 
-    page.scrollIntoView({
-
-      behavior:"smooth",
-
-      block:"start"
-
-    });
+    updateDocumentInfo();
 
   }
 
-}
+
+  /* =========================================
+     RENDER MAIN PAGE
+  ========================================= */
+
+  async function renderMainPage(
+    pageNumber
+  ) {
+
+    const page =
+      await currentPDF.getPage(
+        pageNumber
+      );
 
 
-/* =====================================================
-   SELECT PAGE
-===================================================== */
+    const rotation =
+      pageRotations[pageNumber] || 0;
 
-function updateSelectedPage(){
 
-  document
-  .querySelectorAll(
-    ".pdf-page-wrapper"
-  )
-  .forEach(
-    function(element){
+    const viewport =
+      page.getViewport({
 
-      element.classList.remove(
+        scale:
+          zoomLevel,
+
+        rotation:
+          rotation
+
+      });
+
+
+    const wrapper =
+      document.createElement(
+        "div"
+      );
+
+
+    wrapper.className =
+      "pdf-page-wrapper";
+
+
+    wrapper.dataset.page =
+      pageNumber;
+
+
+    if (
+      pageNumber === selectedPage
+    ) {
+
+      wrapper.classList.add(
         "selected-page"
       );
 
     }
-  );
 
 
-  document
-  .querySelectorAll(
-    ".page-thumbnail"
-  )
-  .forEach(
-    function(element){
+    const label =
+      document.createElement(
+        "div"
+      );
 
-      element.classList.remove(
+
+    label.className =
+      "page-label";
+
+
+    label.textContent =
+      "Page " + pageNumber;
+
+
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    const context =
+      canvas.getContext(
+        "2d"
+      );
+
+
+    canvas.width =
+      viewport.width;
+
+
+    canvas.height =
+      viewport.height;
+
+
+    canvas.style.maxWidth =
+      "100%";
+
+
+    canvas.style.height =
+      "auto";
+
+
+    wrapper.appendChild(
+      label
+    );
+
+
+    wrapper.appendChild(
+      canvas
+    );
+
+
+    document
+      .getElementById(
+        "pdfViewer"
+      )
+      .appendChild(
+        wrapper
+      );
+
+
+    await page.render({
+
+      canvasContext:
+        context,
+
+      viewport:
+        viewport
+
+    }).promise;
+
+
+    wrapper.addEventListener(
+      "click",
+      function () {
+
+        selectedPage =
+          pageNumber;
+
+        updateSelectedPage();
+
+      }
+    );
+
+  }
+
+
+  /* =========================================
+     THUMBNAIL
+  ========================================= */
+
+  async function renderThumbnail(
+    pageNumber
+  ) {
+
+    const page =
+      await currentPDF.getPage(
+        pageNumber
+      );
+
+
+    const rotation =
+      pageRotations[pageNumber] || 0;
+
+
+    const viewport =
+      page.getViewport({
+
+        scale:
+          0.25,
+
+        rotation:
+          rotation
+
+      });
+
+
+    const box =
+      document.createElement(
+        "div"
+      );
+
+
+    box.className =
+      "page-thumbnail";
+
+
+    box.dataset.page =
+      pageNumber;
+
+
+    if (
+      pageNumber === selectedPage
+    ) {
+
+      box.classList.add(
         "active"
       );
 
     }
-  );
 
 
-  const mainPage =
-    document.querySelector(
-      '.pdf-page-wrapper[data-page="' +
-      selectedPage +
-      '"]'
+    const canvas =
+      document.createElement(
+        "canvas"
+      );
+
+
+    const context =
+      canvas.getContext(
+        "2d"
+      );
+
+
+    canvas.width =
+      viewport.width;
+
+
+    canvas.height =
+      viewport.height;
+
+
+    const number =
+      document.createElement(
+        "div"
+      );
+
+
+    number.className =
+      "page-number";
+
+
+    number.textContent =
+      "Page " + pageNumber;
+
+
+    const actions =
+      document.createElement(
+        "div"
+      );
+
+
+    actions.className =
+      "page-actions";
+
+
+    /* =================================
+       ROTATE BUTTON
+    ================================= */
+
+    const rotateButton =
+      document.createElement(
+        "button"
+      );
+
+
+    rotateButton.innerHTML =
+      "↻";
+
+
+    rotateButton.title =
+      "Rotate page";
+
+
+    rotateButton.onclick =
+      function (event) {
+
+        event.stopPropagation();
+
+        rotatePage(
+          pageNumber
+        );
+
+      };
+
+
+    /* =================================
+       DELETE BUTTON
+    ================================= */
+
+    const deleteButton =
+      document.createElement(
+        "button"
+      );
+
+
+    deleteButton.innerHTML =
+      "🗑";
+
+
+    deleteButton.title =
+      "Delete page";
+
+
+    deleteButton.onclick =
+      function (event) {
+
+        event.stopPropagation();
+
+        deletePage(
+          pageNumber
+        );
+
+      };
+
+
+    actions.appendChild(
+      rotateButton
     );
 
 
-  const thumbnail =
-    document.querySelector(
-      '.page-thumbnail[data-page="' +
-      selectedPage +
-      '"]'
+    actions.appendChild(
+      deleteButton
     );
 
 
-  if(mainPage){
-
-    mainPage.classList.add(
-      "selected-page"
+    box.appendChild(
+      canvas
     );
+
+
+    box.appendChild(
+      number
+    );
+
+
+    box.appendChild(
+      actions
+    );
+
+
+    document
+      .getElementById(
+        "thumbnails"
+      )
+      .appendChild(
+        box
+      );
+
+
+    await page.render({
+
+      canvasContext:
+        context,
+
+      viewport:
+        viewport
+
+    }).promise;
+
+
+    box.onclick =
+      function () {
+
+        selectedPage =
+          pageNumber;
+
+
+        scrollToPage(
+          pageNumber
+        );
+
+
+        updateSelectedPage();
+
+      };
 
   }
 
 
-  if(thumbnail){
+  /* =========================================
+     SCROLL TO PAGE
+  ========================================= */
 
-    thumbnail.classList.add(
-      "active"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   ROTATE PAGE
-===================================================== */
-
-async function rotatePage(
-  pageNumber
-){
-
-  pageRotations[pageNumber] =
-    (
-      pageRotations[pageNumber] || 0
-    ) + 90;
-
-
-  if(
-    pageRotations[pageNumber] >= 360
-  ){
-
-    pageRotations[pageNumber] = 0;
-
-  }
-
-
-  selectedPage =
-    pageNumber;
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ROTATE SELECTED PAGE
-===================================================== */
-
-function rotateSelectedPage(){
-
-  if(!currentPDF){
-
-    alert(
-      "पहले कोई PDF खोलें।"
-    );
-
-    return;
-  }
-
-
-  rotatePage(
-    selectedPage
-  );
-
-}
-
-
-/* =====================================================
-   DELETE PAGE
-===================================================== */
-
-async function deletePage(
-  pageNumber
-){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  const remainingPages =
-    currentPDF.numPages -
-    deletedPages.size -
-    1;
-
-
-  if(remainingPages < 1){
-
-    alert(
-      "कम से कम एक page रखना जरूरी है।"
-    );
-
-    return;
-  }
-
-
-  const confirmDelete =
-    confirm(
-      "क्या आप Page " +
-      pageNumber +
-      " को हटाना चाहते हैं?"
-    );
-
-
-  if(!confirmDelete){
-    return;
-  }
-
-
-  deletedPages.add(
+  function scrollToPage(
     pageNumber
-  );
-
-
-  selectedPage = 1;
-
-
-  while(
-    deletedPages.has(selectedPage) &&
-    selectedPage <= currentPDF.numPages
-  ){
-
-    selectedPage++;
-
-  }
-
-
-  if(
-    selectedPage > currentPDF.numPages
-  ){
-
-    selectedPage = 1;
-
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   DELETE SELECTED PAGE
-===================================================== */
-
-function deleteSelectedPage(){
-
-  if(!currentPDF){
-
-    alert(
-      "पहले कोई PDF खोलें।"
-    );
-
-    return;
-  }
-
-
-  deletePage(
-    selectedPage
-  );
-
-}
-
-
-/* =====================================================
-   ZOOM IN
-===================================================== */
-
-async function zoomIn(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel += .2;
-
-
-  if(zoomLevel > 3){
-    zoomLevel = 3;
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ZOOM OUT
-===================================================== */
-
-async function zoomOut(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel -= .2;
-
-
-  if(zoomLevel < .5){
-    zoomLevel = .5;
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ZOOM TEXT
-===================================================== */
-
-function updateZoomText(){
-
-  const zoomElement =
-    document.getElementById(
-      "zoomValue"
-    );
-
-
-  if(!zoomElement){
-    return;
-  }
-
-
-  const percent =
-    Math.round(
-      (zoomLevel / 1.3) * 100
-    );
-
-
-  zoomElement.textContent =
-    percent + "%";
-
-
-  const infoZoom =
-    document.getElementById(
-      "infoZoom"
-    );
-
-
-  if(infoZoom){
-
-    infoZoom.textContent =
-      percent + "%";
-
-  }
-
-}
-
-
-/* =====================================================
-   FIT TO SCREEN
-===================================================== */
-
-async function fitToScreen(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel = 1.0;
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   DOCUMENT INFORMATION
-===================================================== */
-
-function updateDocumentInfo(){
-
-  const infoPages =
-    document.getElementById(
-      "infoPages"
-    );
-
-
-  const infoFile =
-    document.getElementById(
-      "infoFile"
-    );
-
-
-  const visiblePages =
-    currentPDF
-    ?
-    currentPDF.numPages -
-    deletedPages.size
-    :
-    0;
-
-
-  if(infoPages){
-
-    infoPages.textContent =
-      currentPDF
-      ?
-      visiblePages
-      :
-      "No PDF opened";
-
-  }
-
-
-  if(infoFile){
-
-    infoFile.textContent =
-      currentPDF
-      ?
-      originalFileName
-      :
-      "No file selected";
-
-  }
-
-
-  updateZoomText();
-
-}
-
-
-/* =====================================================
-   SAVE PDF
-===================================================== */
-
-async function savePDF(){
-
-  if(
-    !originalPDFBytes ||
-    !currentPDF
-  ){
-
-    alert(
-      "पहले कोई PDF खोलें।"
-    );
-
-    return;
-  }
-
-
-  try{
-
-    const saveButton =
-      document.getElementById(
-        "saveButton"
+  ) {
+
+    const page =
+      document.querySelector(
+        '.pdf-page-wrapper[data-page="' +
+        pageNumber +
+        '"]'
       );
 
 
-    const oldText =
-      saveButton
-      ?
-      saveButton.innerHTML
-      :
-      "";
+    if (page) {
 
+      page.scrollIntoView({
 
-    if(saveButton){
+        behavior:
+          "smooth",
 
-      saveButton.innerHTML =
-        "⏳ Saving...";
+        block:
+          "start"
 
-      saveButton.disabled =
-        true;
+      });
 
     }
 
-
-    const sourcePDF =
-      await PDFLib.PDFDocument.load(
-        originalPDFBytes
-      );
+  }
 
 
-    const outputPDF =
-      await PDFLib.PDFDocument.create();
+  /* =========================================
+     SELECTED PAGE
+  ========================================= */
 
+  function updateSelectedPage() {
 
-    const pageIndexes = [];
+    document
+      .querySelectorAll(
+        ".pdf-page-wrapper"
+      )
+      .forEach(
+        function (element) {
 
+          element.classList.remove(
+            "selected-page"
+          );
 
-    for(
-      let i = 0;
-      i < sourcePDF.getPageCount();
-      i++
-    ){
-
-      const pageNumber =
-        i + 1;
-
-
-      if(
-        deletedPages.has(pageNumber)
-      ){
-
-        continue;
-
-      }
-
-
-      pageIndexes.push(i);
-
-    }
-
-
-    const copiedPages =
-      await outputPDF.copyPages(
-        sourcePDF,
-        pageIndexes
-      );
-
-
-    copiedPages.forEach(
-      function(page,index){
-
-        const originalIndex =
-          pageIndexes[index];
-
-
-        const pageNumber =
-          originalIndex + 1;
-
-
-        const extraRotation =
-          pageRotations[pageNumber] || 0;
-
-
-        const originalRotation =
-          page.getRotation()
-          ?
-          page.getRotation().angle
-          :
-          0;
-
-
-        const finalRotation =
-          (
-            originalRotation +
-            extraRotation
-          ) % 360;
-
-
-        page.setRotation(
-          PDFLib.degrees(
-            finalRotation
-          )
-        );
-
-
-        outputPDF.addPage(
-          page
-        );
-
-      }
-    );
-
-
-    const pdfBytes =
-      await outputPDF.save();
-
-
-    const blob =
-      new Blob(
-        [pdfBytes],
-        {
-          type:"application/pdf"
         }
       );
 
 
-    const url =
-      URL.createObjectURL(
-        blob
+    document
+      .querySelectorAll(
+        ".page-thumbnail"
+      )
+      .forEach(
+        function (element) {
+
+          element.classList.remove(
+            "active"
+          );
+
+        }
       );
 
 
-    const link =
-      document.createElement("a");
+    const mainPage =
+      document.querySelector(
+        '.pdf-page-wrapper[data-page="' +
+        selectedPage +
+        '"]'
+      );
 
 
-    link.href =
-      url;
+    const thumbnail =
+      document.querySelector(
+        '.page-thumbnail[data-page="' +
+        selectedPage +
+        '"]'
+      );
 
 
-    let newName =
-      originalFileName;
+    if (mainPage) {
 
-
-    if(
-      newName
-      .toLowerCase()
-      .endsWith(".pdf")
-    ){
-
-      newName =
-        newName.slice(
-          0,
-          -4
-        );
-
-    }
-
-
-    link.download =
-      newName +
-      "-edited.pdf";
-
-
-    document.body.appendChild(
-      link
-    );
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    URL.revokeObjectURL(
-      url
-    );
-
-
-    if(saveButton){
-
-      saveButton.innerHTML =
-        "✓ Saved";
-
-
-      setTimeout(
-        function(){
-
-          saveButton.innerHTML =
-            oldText;
-
-
-          saveButton.disabled =
-            false;
-
-        },
-        1800
+      mainPage.classList.add(
+        "selected-page"
       );
 
     }
 
 
-  }
-  catch(error){
+    if (thumbnail) {
 
-    console.error(
-      "SAVE ERROR:",
-      error
-    );
-
-
-    alert(
-      "PDF save करने में समस्या हुई.\n\n" +
-      error.message
-    );
-
-
-    const saveButton =
-      document.getElementById(
-        "saveButton"
-      );
-
-
-    if(saveButton){
-
-      saveButton.disabled =
-        false;
-
-      saveButton.innerHTML =
-        "↓ Save PDF";
-
-    }
-
-  }
-
-}
-
-
-/* =====================================================
-   MOBILE / DESKTOP MENU
-===================================================== */
-
-function toggleMenu(){
-
-  const sidebar =
-    document.getElementById(
-      "sidebar"
-    );
-
-
-  if(sidebar){
-
-    sidebar.classList.toggle(
-      "open"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   PAGE SIDEBAR MOBILE
-===================================================== */
-
-function togglePageSidebar(){
-
-  const pageSidebar =
-    document.getElementById(
-      "pageSidebar"
-    );
-
-
-  if(pageSidebar){
-
-    pageSidebar.classList.toggle(
-      "open"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   TOOL SELECTION
-===================================================== */
-
-function selectTool(
-  button,
-  tool
-){
-
-  document
-  .querySelectorAll(
-    ".tool"
-  )
-  .forEach(
-    function(item){
-
-      item.classList.remove(
+      thumbnail.classList.add(
         "active"
       );
 
     }
-  );
-
-
-  if(button){
-
-    button.classList.add(
-      "active"
-    );
 
   }
 
 
-  /*
-    Text और दूसरे tools को
-    अगली step में functional बनाया जाएगा।
-  */
+  /* =========================================
+     ROTATE PAGE
+  ========================================= */
+
+  async function rotatePage(
+    pageNumber
+  ) {
+
+    pageRotations[pageNumber] =
+      (
+        pageRotations[pageNumber] || 0
+      ) + 90;
 
 
-  if(
-    tool === "text" ||
-    tool === "highlight" ||
-    tool === "textbox" ||
-    tool === "signature" ||
-    tool === "image" ||
-    tool === "crop" ||
-    tool === "merge" ||
-    tool === "split" ||
-    tool === "reorder"
-  ){
+    if (
+      pageRotations[pageNumber] >= 360
+    ) {
 
-    alert(
-      "यह tool अगली step में बनाया जाएगा।"
-    );
+      pageRotations[pageNumber] =
+        0;
+
+    }
+
+
+    selectedPage =
+      pageNumber;
+
+
+    await renderPDF();
 
   }
 
-}
+
+  /* =========================================
+     DELETE PAGE
+  ========================================= */
+
+  async function deletePage(
+    pageNumber
+  ) {
+
+    if (!currentPDF) return;
 
 
-/* =====================================================
-   MOBILE TOOL
-===================================================== */
-
-function selectMobileTool(
-  toolName
-){
-
-  alert(
-    toolName +
-    " tool अगली step में बनाया जाएगा।"
-  );
-
-}
+    const remainingPages =
+      currentPDF.numPages -
+      deletedPages.size -
+      1;
 
 
-/* =====================================================
-   PRINT
-===================================================== */
+    if (
+      remainingPages < 1
+    ) {
 
-function printPDF(){
+      alert(
+        "कम से कम एक page रखना जरूरी है।"
+      );
 
-  if(!originalPDFBytes){
+      return;
 
-    alert(
-      "पहले कोई PDF खोलें।"
+    }
+
+
+    const confirmDelete =
+      confirm(
+        "क्या आप Page " +
+        pageNumber +
+        " को हटाना चाहते हैं?"
+      );
+
+
+    if (!confirmDelete) return;
+
+
+    deletedPages.add(
+      pageNumber
     );
 
-    return;
+
+    /* =================================
+       FIND NEXT AVAILABLE PAGE
+    ================================= */
+
+    selectedPage = 1;
+
+
+    while (
+      deletedPages.has(
+        selectedPage
+      ) &&
+      selectedPage <=
+        currentPDF.numPages
+    ) {
+
+      selectedPage++;
+
+    }
+
+
+    await renderPDF();
+
   }
 
 
-  const blob =
-    new Blob(
-      [originalPDFBytes],
-      {
-        type:"application/pdf"
+  /* =========================================
+     ZOOM IN
+  ========================================= */
+
+  async function zoomIn() {
+
+    if (!currentPDF) return;
+
+
+    zoomLevel += 0.2;
+
+
+    if (
+      zoomLevel > 3
+    ) {
+
+      zoomLevel = 3;
+
+    }
+
+
+    await renderPDF();
+
+  }
+
+
+  /* =========================================
+     ZOOM OUT
+  ========================================= */
+
+  async function zoomOut() {
+
+    if (!currentPDF) return;
+
+
+    zoomLevel -= 0.2;
+
+
+    if (
+      zoomLevel < 0.5
+    ) {
+
+      zoomLevel = 0.5;
+
+    }
+
+
+    await renderPDF();
+
+  }
+
+
+  /* =========================================
+     ZOOM TEXT
+  ========================================= */
+
+  function updateZoomText() {
+
+    const zoomElement =
+      document.getElementById(
+        "zoomValue"
+      );
+
+
+    if (!zoomElement) return;
+
+
+    const percent =
+      Math.round(
+        (zoomLevel / 1.3) * 100
+      );
+
+
+    zoomElement.textContent =
+      percent + "%";
+
+  }
+
+
+  /* =========================================
+     FIT TO SCREEN
+  ========================================= */
+
+  async function fitToScreen() {
+
+    if (!currentPDF) return;
+
+
+    zoomLevel =
+      1.0;
+
+
+    await renderPDF();
+
+  }
+
+
+  /* =========================================
+     DOCUMENT INFORMATION
+  ========================================= */
+
+  function updateDocumentInfo() {
+
+    const visiblePages =
+      currentPDF
+        ? currentPDF.numPages -
+          deletedPages.size
+        : 0;
+
+
+    const cards =
+      document.querySelectorAll(
+        ".panel-card"
+      );
+
+
+    if (
+      cards.length >= 3 &&
+      currentPDF
+    ) {
+
+      cards[0].innerHTML =
+        "<strong>Pages</strong>" +
+        visiblePages;
+
+
+      cards[1].innerHTML =
+        "<strong>Zoom</strong>" +
+        Math.round(
+          (zoomLevel / 1.3) * 100
+        ) +
+        "%";
+
+
+      cards[2].innerHTML =
+        "<strong>File</strong>" +
+        originalFileName;
+
+    }
+
+  }
+
+
+  /* =========================================
+     SAVE PDF
+  ========================================= */
+
+  async function savePDF() {
+
+    if (
+      !originalPDFBytes ||
+      !currentPDF
+    ) {
+
+      alert(
+        "पहले कोई PDF खोलें।"
+      );
+
+      return;
+
+    }
+
+
+    let saveButton = null;
+
+    let oldText = "";
+
+
+    try {
+
+      /* =================================
+         SAVE BUTTON
+      ================================= */
+
+      saveButton =
+        document.querySelector(
+          ".btn-primary"
+        );
+
+
+      if (saveButton) {
+
+        oldText =
+          saveButton.innerHTML;
+
+        saveButton.innerHTML =
+          "⏳ Saving...";
+
+        saveButton.disabled =
+          true;
+
       }
-    );
 
 
-  const url =
-    URL.createObjectURL(
-      blob
-    );
+      /* =================================
+         IMPORTANT:
+         MAKE A NEW COPY OF ORIGINAL PDF
+      ================================= */
+
+      const pdfData =
+        new Uint8Array(
+          originalPDFBytes
+        );
 
 
-  const printWindow =
-    window.open(
-      url,
-      "_blank"
-    );
+      /* =================================
+         LOAD ORIGINAL PDF
+      ================================= */
+
+      const sourcePDF =
+        await PDFLib.PDFDocument.load(
+          pdfData
+        );
 
 
-  if(!printWindow){
+      /* =================================
+         CREATE OUTPUT PDF
+      ================================= */
 
-    alert(
-      "Browser ने print window block कर दी।"
-    );
+      const outputPDF =
+        await PDFLib.PDFDocument.create();
 
-    return;
+
+      /* =================================
+         PAGE INDEXES
+      ================================= */
+
+      const pageIndexes = [];
+
+
+      for (
+        let i = 0;
+        i < sourcePDF.getPageCount();
+        i++
+      ) {
+
+        const pageNumber =
+          i + 1;
+
+
+        if (
+          deletedPages.has(
+            pageNumber
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        pageIndexes.push(
+          i
+        );
+
+      }
+
+
+      /* =================================
+         COPY PAGES
+      ================================= */
+
+      const copiedPages =
+        await outputPDF.copyPages(
+          sourcePDF,
+          pageIndexes
+        );
+
+
+      copiedPages.forEach(
+        function (
+          page,
+          index
+        ) {
+
+          const originalIndex =
+            pageIndexes[index];
+
+
+          const pageNumber =
+            originalIndex + 1;
+
+
+          const extraRotation =
+            pageRotations[
+              pageNumber
+            ] || 0;
+
+
+          let originalRotation = 0;
+
+
+          try {
+
+            const rotation =
+              page.getRotation();
+
+            if (rotation) {
+
+              originalRotation =
+                rotation.angle || 0;
+
+            }
+
+          } catch (e) {
+
+            originalRotation =
+              0;
+
+          }
+
+
+          const finalRotation =
+            (
+              originalRotation +
+              extraRotation
+            ) % 360;
+
+
+          if (
+            finalRotation !== 0
+          ) {
+
+            page.setRotation(
+              PDFLib.degrees(
+                finalRotation
+              )
+            );
+
+          }
+
+
+          outputPDF.addPage(
+            page
+          );
+
+        }
+      );
+
+
+      /* =================================
+         SAVE OUTPUT
+      ================================= */
+
+      const pdfBytes =
+        await outputPDF.save();
+
+
+      /* =================================
+         CREATE DOWNLOAD
+      ================================= */
+
+      const blob =
+        new Blob(
+          [pdfBytes],
+          {
+            type:
+              "application/pdf"
+          }
+        );
+
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+
+      link.href =
+        url;
+
+
+      /* =================================
+         FILE NAME
+      ================================= */
+
+      let newName =
+        originalFileName;
+
+
+      if (
+        newName
+          .toLowerCase()
+          .endsWith(".pdf")
+      ) {
+
+        newName =
+          newName.slice(
+            0,
+            -4
+          );
+
+      }
+
+
+      link.download =
+        newName +
+        "-edited.pdf";
+
+
+      link.style.display =
+        "none";
+
+
+      document
+        .body
+        .appendChild(
+          link
+        );
+
+
+      link.click();
+
+
+      link.remove();
+
+
+      /* =================================
+         CLEAN URL
+      ================================= */
+
+      setTimeout(
+        function () {
+
+          URL.revokeObjectURL(
+            url
+          );
+
+        },
+        1000
+      );
+
+
+      /* =================================
+         SUCCESS
+      ================================= */
+
+      if (saveButton) {
+
+        saveButton.innerHTML =
+          "✓ Saved";
+
+        setTimeout(
+          function () {
+
+            saveButton.innerHTML =
+              oldText ||
+              "↓ Save PDF";
+
+            saveButton.disabled =
+              false;
+
+          },
+          1800
+        );
+
+      }
+
+
+    } catch (error) {
+
+      console.error(
+        "SAVE ERROR:",
+        error
+      );
+
+
+      alert(
+        "PDF save करने में समस्या हुई।\n\n" +
+        error.message
+      );
+
+
+      if (saveButton) {
+
+        saveButton.disabled =
+          false;
+
+        saveButton.innerHTML =
+          "↓ Save PDF";
+
+      }
+
+    }
 
   }
 
 
-  setTimeout(
-    function(){
+  /* =========================================
+     SAVE BUTTON
+  ========================================= */
 
-      printWindow.print();
+  document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    },
-    1000
+      const saveButton =
+        document.querySelector(
+          ".btn-primary"
+        );
+
+
+      if (saveButton) {
+
+        saveButton.addEventListener(
+          "click",
+          savePDF
+        );
+
+      }
+
+    }
   );
 
-}
+
+  /* =========================================
+     KEYBOARD SHORTCUTS
+  ========================================= */
+
+  document.addEventListener(
+    "keydown",
+    function (event) {
+
+      /* Ctrl + O */
+
+      if (
+        event.ctrlKey &&
+        event.key.toLowerCase() === "o"
+      ) {
+
+        event.preventDefault();
+
+        openFile();
+
+      }
 
 
-/* =====================================================
-   UNDO / REDO
-===================================================== */
+      /* Ctrl + S */
 
-function undoAction(){
+      if (
+        event.ctrlKey &&
+        event.key.toLowerCase() === "s"
+      ) {
 
-  alert(
-    "Undo अगली step में पूरी तरह functional किया जाएगा।"
+        event.preventDefault();
+
+        savePDF();
+
+      }
+
+
+      /* Zoom + */
+
+      if (
+        event.key === "+"
+      ) {
+
+        zoomIn();
+
+      }
+
+
+      /* Zoom - */
+
+      if (
+        event.key === "-"
+      ) {
+
+        zoomOut();
+
+      }
+
+    }
   );
-
-}
-
-
-function redoAction(){
-
-  alert(
-    "Redo अगली step में पूरी तरह functional किया जाएगा।"
-  );
-
-}
-
-
-/* =====================================================
-   KEYBOARD SHORTCUTS
-===================================================== */
-
-document.addEventListener(
-  "keydown",
-  function(event){
-
-    /* CTRL + O */
-
-    if(
-      event.ctrlKey &&
-      event.key.toLowerCase() === "o"
-    ){
-
-      event.preventDefault();
-
-      openFile();
-
-    }
-
-
-    /* CTRL + S */
-
-    if(
-      event.ctrlKey &&
-      event.key.toLowerCase() === "s"
-    ){
-
-      event.preventDefault();
-
-      savePDF();
-
-    }
-
-
-    /* ZOOM + */
-
-    if(
-      event.key === "+"
-    ){
-
-      zoomIn();
-
-    }
-
-
-    /* ZOOM - */
-
-    if(
-      event.key === "-"
-    ){
-
-      zoomOut();
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   INITIAL CHECK
-===================================================== */
-
-console.log(
-  "SSPDF Editor loaded successfully."
-);
 
 </script>
-
 
 </body>
 </html>
