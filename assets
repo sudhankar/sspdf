@@ -14,5 +14,5 @@
   <path d="M 230 220 C 230 190, 290 190, 290 220 C 290 250, 230 250, 230 280 C 230 310, 290 310, 290 280" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
   <rect x="320" y="196" width="52" height="116" rx="14" fill="#FFFFFF"/>
   <path d="M 140 370 L 370 370" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round" opacity="0.8"/>
-</svg>
+</svg> 
 
