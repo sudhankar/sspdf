@@ -1,3781 +1,571 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en" class="light">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>SSPDF Editor</title>
-
-<meta name="description"
-content="Free browser based PDF editor. Edit PDF privately on your device.">
-
-<style>
-
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
-
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:#f1f5f9;
-  color:#202124;
-  height:100vh;
-  overflow:hidden;
-}
-
-button{
-  font-family:inherit;
-  cursor:pointer;
-}
-
-/* =========================
-   TOP BAR
-========================= */
-
-.topbar{
-  height:64px;
-  background:#fff;
-  border-bottom:1px solid #e5e7eb;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 18px;
-  position:relative;
-  z-index:100;
-}
-
-.logo{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  font-size:21px;
-  font-weight:700;
-  color:#111827;
-}
-
-.logo-icon{
-  width:38px;
-  height:38px;
-  border-radius:10px;
-  background:#2563eb;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-  font-size:18px;
-}
-
-.top-actions{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
-
-.btn{
-  border:1px solid #d9dee8;
-  background:#fff;
-  padding:9px 14px;
-  border-radius:8px;
-  font-size:14px;
-  color:#374151;
-}
-
-.btn:hover{
-  background:#f3f4f6;
-}
-
-.btn-primary{
-  background:#2563eb;
-  color:white;
-  border-color:#2563eb;
-  font-weight:600;
-}
-
-.btn-primary:hover{
-  background:#1d4ed8;
-}
-
-/* =========================
-   WORKSPACE
-========================= */
-
-.workspace{
-  height:calc(100vh - 64px);
-  display:flex;
-  min-width:0;
-}
-
-/* =========================
-   TOOL SIDEBAR
-========================= */
-
-.sidebar{
-  width:190px;
-  background:#fff;
-  border-right:1px solid #e5e7eb;
-  padding:16px 10px;
-  overflow-y:auto;
-  flex-shrink:0;
-}
-
-.sidebar-title{
-  font-size:12px;
-  font-weight:700;
-  color:#9ca3af;
-  text-transform:uppercase;
-  margin:4px 8px 12px;
-}
-
-.tool{
-  width:100%;
-  border:0;
-  background:transparent;
-  display:flex;
-  align-items:center;
-  gap:11px;
-  padding:11px 12px;
-  border-radius:8px;
-  color:#374151;
-  font-size:14px;
-  text-align:left;
-  margin-bottom:3px;
-}
-
-.tool:hover{
-  background:#f3f4f6;
-}
-
-.tool.active{
-  background:#eff6ff;
-  color:#2563eb;
-  font-weight:600;
-}
-
-.tool-icon{
-  width:23px;
-  text-align:center;
-  font-size:17px;
-}
-
-/* =========================
-   DOCUMENT AREA
-========================= */
-
-.document-area{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  min-width:0;
-}
-
-/* =========================
-   TOOLBAR
-========================= */
-
-.document-toolbar{
-  height:54px;
-  background:#fff;
-  border-bottom:1px solid #e5e7eb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  flex-shrink:0;
-}
-
-.zoom-control{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.zoom-control button{
-  width:36px;
-  height:34px;
-  border:1px solid #e1e5eb;
-  background:#fff;
-  border-radius:7px;
-  font-size:16px;
-}
-
-.zoom-value{
-  min-width:65px;
-  text-align:center;
-  font-size:13px;
-  color:#4b5563;
-}
-
-/* =========================
-   MAIN PDF AREA
-========================= */
-
-.main-document{
-  flex:1;
-  overflow:auto;
-  background:#e9edf3;
-  padding:25px;
-}
-
-.pdf-page-wrapper{
-  position:relative;
-  width:fit-content;
-  margin:0 auto 25px auto;
-  background:#fff;
-  box-shadow:0 4px 18px rgba(0,0,0,.12);
-}
-
-.pdf-page-wrapper canvas{
-  display:block;
-  background:#fff;
-}
-
-.pdf-page-wrapper.selected-page{
-  outline:3px solid #2563eb;
-}
-
-.page-label{
-  position:absolute;
-  top:8px;
-  left:8px;
-  background:rgba(0,0,0,.65);
-  color:#fff;
-  padding:4px 8px;
-  border-radius:5px;
-  font-size:11px;
-  z-index:2;
-}
-
-/* =========================
-   PAGE SIDEBAR
-========================= */
-
-.page-sidebar{
-  width:170px;
-  background:#f8fafc;
-  border-right:1px solid #e5e7eb;
-  padding:12px 10px;
-  overflow-y:auto;
-  flex-shrink:0;
-}
-
-.page-sidebar-title{
-  font-size:12px;
-  font-weight:700;
-  color:#6b7280;
-  margin:4px 5px 12px;
-}
-
-.page-thumbnail{
-  position:relative;
-  background:#fff;
-  border:2px solid transparent;
-  border-radius:8px;
-  padding:5px;
-  margin-bottom:12px;
-  cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.08);
-}
-
-.page-thumbnail.active{
-  border-color:#2563eb;
-}
-
-.page-thumbnail canvas{
-  display:block;
-  width:100%;
-  height:auto;
-  border-radius:4px;
-}
-
-.page-number{
-  text-align:center;
-  font-size:11px;
-  color:#6b7280;
-  margin-top:4px;
-}
-
-.page-actions{
-  display:flex;
-  justify-content:center;
-  gap:4px;
-  margin-top:5px;
-}
-
-.page-actions button{
-  width:27px;
-  height:25px;
-  border:1px solid #e5e7eb;
-  background:#fff;
-  border-radius:5px;
-  font-size:12px;
-}
-
-/* =========================
-   EMPTY STATE
-========================= */
-
-.empty-state{
-  width:min(600px,100%);
-  margin:8vh auto 0;
-  background:#fff;
-  border-radius:16px;
-  padding:45px 30px;
-  text-align:center;
-  box-shadow:0 8px 35px rgba(0,0,0,.06);
-}
-
-.upload-icon{
-  width:76px;
-  height:76px;
-  margin:auto;
-  border-radius:20px;
-  background:#eff6ff;
-  color:#2563eb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:35px;
-}
-
-.empty-state h1{
-  font-size:25px;
-  margin-top:20px;
-}
-
-.empty-state p{
-  margin:12px auto 25px;
-  max-width:440px;
-  color:#6b7280;
-  line-height:1.6;
-  font-size:14px;
-}
-
-.choose-btn{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  border:0;
-  background:#2563eb;
-  color:#fff;
-  padding:12px 21px;
-  border-radius:9px;
-  font-size:15px;
-  font-weight:600;
-}
-
-.privacy{
-  margin-top:18px;
-  font-size:12px;
-  color:#9ca3af;
-}
-
-/* =========================
-   RIGHT PANEL
-========================= */
-
-.right-panel{
-  width:225px;
-  background:#fff;
-  border-left:1px solid #e5e7eb;
-  padding:18px 14px;
-  overflow:auto;
-  flex-shrink:0;
-}
-
-.panel-title{
-  font-size:13px;
-  font-weight:700;
-  color:#6b7280;
-  margin-bottom:13px;
-}
-
-.panel-card{
-  border:1px solid #e5e7eb;
-  border-radius:10px;
-  padding:12px;
-  margin-bottom:10px;
-  font-size:13px;
-  color:#4b5563;
-  word-break:break-word;
-}
-
-.panel-card strong{
-  display:block;
-  color:#111827;
-  margin-bottom:5px;
-}
-
-/* =========================
-   TEXT EDITOR TOOLBAR
-========================= */
-
-.text-toolbar{
-  display:none;
-  position:fixed;
-  top:72px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:500;
-  background:#fff;
-  border:1px solid #dbe1ea;
-  box-shadow:0 8px 25px rgba(0,0,0,.15);
-  border-radius:10px;
-  padding:8px;
-  gap:6px;
-  align-items:center;
-  flex-wrap:wrap;
-  max-width:95vw;
-}
-
-.text-toolbar.show{
-  display:flex;
-}
-
-.text-toolbar select,
-.text-toolbar input{
-  height:34px;
-  border:1px solid #d1d5db;
-  border-radius:6px;
-  padding:0 7px;
-  background:#fff;
-}
-
-.text-toolbar select{
-  min-width:150px;
-}
-
-.text-toolbar input[type="number"]{
-  width:70px;
-}
-
-.text-tool-btn{
-  height:34px;
-  min-width:34px;
-  border:1px solid #d1d5db;
-  background:#fff;
-  border-radius:6px;
-  font-weight:600;
-}
-
-.text-tool-btn.active{
-  background:#eff6ff;
-  border-color:#2563eb;
-  color:#2563eb;
-}
-
-.text-color{
-  width:38px !important;
-  padding:2px !important;
-}
-
-/* =========================
-   TEXT BOX
-========================= */
-
-.text-box{
-  position:absolute;
-  min-width:80px;
-  min-height:30px;
-  border:1px dashed #2563eb;
-  background:rgba(255,255,255,.15);
-  padding:3px;
-  cursor:move;
-  z-index:20;
-  touch-action:none;
-}
-
-.text-box.selected{
-  border:2px solid #2563eb;
-  background:rgba(239,246,255,.35);
-}
-
-.text-box textarea{
-  display:block;
-  width:100%;
-  min-width:70px;
-  min-height:28px;
-  resize:both;
-  border:0;
-  outline:0;
-  background:transparent;
-  overflow:hidden;
-  font-family:"Noto Sans Devanagari",Arial,sans-serif;
-  color:#111;
-  line-height:1.35;
-  padding:2px;
-}
-
-.text-box-delete{
-  position:absolute;
-  right:-10px;
-  top:-10px;
-  width:22px;
-  height:22px;
-  border:0;
-  border-radius:50%;
-  background:#ef4444;
-  color:#fff;
-  font-size:12px;
-  display:none;
-  z-index:30;
-}
-
-.text-box.selected .text-box-delete{
-  display:block;
-}
-
-/* =========================
-   TEXT MODE
-========================= */
-
-.text-mode .pdf-page-wrapper{
-  cursor:crosshair;
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-.mobile-menu{
-  display:none;
-  border:0;
-  background:transparent;
-  font-size:23px;
-}
-
-.mobile-bottom{
-  display:none;
-}
-
-@media(max-width:850px){
-
-  .topbar{
-    height:58px;
-    padding:0 10px;
-  }
-
-  .logo{
-    font-size:18px;
-  }
-
-  .logo-icon{
-    width:34px;
-    height:34px;
-    font-size:16px;
-  }
-
-  .mobile-menu{
-    display:block;
-  }
-
-  .top-actions .desktop-btn{
-    display:none;
-  }
-
-  .top-actions .btn{
-    padding:8px 10px;
-  }
-
-  .workspace{
-    height:calc(100vh - 58px);
-  }
-
-  .sidebar{
-    position:fixed;
-    left:-250px;
-    top:58px;
-    bottom:62px;
-    width:230px;
-    z-index:400;
-    box-shadow:5px 0 20px rgba(0,0,0,.15);
-    transition:left .25s ease;
-  }
-
-  .sidebar.open{
-    left:0;
-  }
-
-  .page-sidebar{
-    position:fixed;
-    left:-190px;
-    top:58px;
-    bottom:62px;
-    z-index:350;
-    box-shadow:5px 0 20px rgba(0,0,0,.12);
-    transition:left .25s ease;
-  }
-
-  .page-sidebar.open{
-    left:0;
-  }
-
-  .right-panel{
-    display:none;
-  }
-
-  .document-toolbar{
-    height:48px;
-  }
-
-  .main-document{
-    padding:15px 8px 80px;
-  }
-
-  .pdf-page-wrapper{
-    max-width:100%;
-  }
-
-  .pdf-page-wrapper canvas{
-    max-width:100%;
-    height:auto;
-  }
-
-  .mobile-bottom{
-    display:flex;
-    position:fixed;
-    bottom:0;
-    left:0;
-    right:0;
-    height:62px;
-    background:#fff;
-    border-top:1px solid #e5e7eb;
-    z-index:300;
-    justify-content:space-around;
-    align-items:center;
-  }
-
-  .bottom-tool{
-    border:0;
-    background:transparent;
-    font-size:11px;
-    color:#4b5563;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:3px;
-  }
-
-  .bottom-tool span:first-child{
-    font-size:19px;
-  }
-
-  .text-toolbar{
-    top:62px;
-    padding:6px;
-    gap:4px;
-  }
-
-  .text-toolbar select{
-    min-width:120px;
-    max-width:140px;
-  }
-
-}
-
-/* =========================
-   LOADING
-========================= */
-
-.loading{
-  position:fixed;
-  inset:0;
-  background:rgba(255,255,255,.8);
-  z-index:1000;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  font-weight:600;
-}
-
-.loading.show{
-  display:flex;
-}
-
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SSPDF — Private PDF Editor</title>
+  <meta name="description" content="Powerful PDF Editing. Private by Design. 100% client-side PDF editing, annotating, signing, merging, and splitting directly in your browser." />
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#635BFF" />
+  
+  <!-- Modern Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- CSS Styles -->
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Dependable Vendor CDN Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
-
 <body>
 
-<!-- =========================
-     TOP BAR
-========================= -->
-
-<header class="topbar">
-
-  <button class="mobile-menu" onclick="toggleMenu()">
-    ☰
-  </button>
-
-  <div class="logo">
-
-    <div class="logo-icon">
-      S
-    </div>
-
-    SSPDF Editor
-
-  </div>
-
-  <div class="top-actions">
-
-    <button class="btn desktop-btn" onclick="undoAction()">
-      ↶ Undo
-    </button>
-
-    <button class="btn desktop-btn" onclick="redoAction()">
-      ↷ Redo
-    </button>
-
-    <button class="btn" onclick="printPDF()">
-      🖨 Print
-    </button>
-
-    <button class="btn btn-primary" onclick="savePDF()">
-      ↓ Save PDF
-    </button>
-
-  </div>
-
-</header>
-
-
-<!-- =========================
-     TEXT TOOLBAR
-========================= -->
-
-<div class="text-toolbar" id="textToolbar">
-
-  <select id="fontFamily">
-
-    <option value="Noto Sans Devanagari">
-      Noto Sans Devanagari
-    </option>
-
-    <option value="Noto Serif Devanagari">
-      Noto Serif Devanagari
-    </option>
-
-    <option value="Noto Sans">
-      Noto Sans
-    </option>
-
-    <option value="Arial">
-      Arial
-    </option>
-
-  </select>
-
-
-  <input
-    type="number"
-    id="fontSize"
-    value="18"
-    min="6"
-    max="100"
-  >
-
-
-  <button
-    class="text-tool-btn"
-    id="boldBtn"
-    onclick="toggleBold()"
-    title="Bold">
-    B
-  </button>
-
-
-  <button
-    class="text-tool-btn"
-    id="italicBtn"
-    onclick="toggleItalic()"
-    title="Italic">
-    I
-  </button>
-
-
-  <input
-    class="text-color"
-    type="color"
-    id="textColor"
-    value="#111111"
-    title="Text Color"
-  >
-
-
-  <button
-    class="text-tool-btn"
-    onclick="setAlignment('left')"
-    title="Left">
-    ≡
-  </button>
-
-  <button
-    class="text-tool-btn"
-    onclick="setAlignment('center')"
-    title="Center">
-    ≡
-  </button>
-
-  <button
-    class="text-tool-btn"
-    onclick="setAlignment('right')"
-    title="Right">
-    ≡
-  </button>
-
-
-  <button
-    class="text-tool-btn"
-    onclick="deleteSelectedText()"
-    title="Delete Text">
-    🗑
-  </button>
-
-</div>
-
-
-<main class="workspace">
-
-
-<!-- =========================
-     LEFT SIDEBAR
-========================= -->
-
-<aside class="sidebar" id="sidebar">
-
-  <div class="sidebar-title">
-    PDF Tools
-  </div>
-
-
-  <button
-    class="tool active"
-    onclick="selectTool(this,'pages')">
-
-    <span class="tool-icon">📄</span>
-    Pages
-
-  </button>
-
-
-  <button
-    class="tool"
-    onclick="selectTool(this,'text')">
-
-    <span class="tool-icon">✏️</span>
-    Edit Text
-
-  </button>
-
-
-  <button
-    class="tool">
-
-    <span class="tool-icon">🖍️</span>
-    Highlight
-
-  </button>
-
-
-  <button
-    class="tool"
-    onclick="selectTool(this,'text')">
-
-    <span class="tool-icon">T</span>
-    Text Box
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">✍️</span>
-    Signature
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">🖼️</span>
-    Image
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">↻</span>
-    Rotate
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">✂️</span>
-    Crop
-
-  </button>
-
-
-  <div
-    class="sidebar-title"
-    style="margin-top:22px;">
-
-    Organize
-
-  </div>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">➕</span>
-    Merge PDF
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">✂</span>
-    Split PDF
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">🗑️</span>
-    Delete Pages
-
-  </button>
-
-
-  <button class="tool">
-
-    <span class="tool-icon">↕️</span>
-    Reorder Pages
-
-  </button>
-
-</aside>
-
-
-<!-- =========================
-     PAGE SIDEBAR
-========================= -->
-
-<aside
-  class="page-sidebar"
-  id="pageSidebar">
-
-  <div class="page-sidebar-title">
-    PAGES
-  </div>
-
-  <div id="thumbnails"></div>
-
-</aside>
-
-
-<!-- =========================
-     DOCUMENT
-========================= -->
-
-<section class="document-area">
-
-
-  <!-- TOOLBAR -->
-
-  <div class="document-toolbar">
-
-    <div class="zoom-control">
-
-      <button onclick="zoomOut()">
-        −
-      </button>
-
-      <div
-        class="zoom-value"
-        id="zoomValue">
-        100%
+  <!-- APP CONTAINER -->
+  <div id="app" class="app-layout">
+    
+    <!-- TOP NAVBAR -->
+    <header class="top-header">
+      <div class="brand-container" id="brand-home-btn" title="Return to Home">
+        <svg class="brand-logo" viewBox="0 0 512 512">
+          <rect x="64" y="32" width="384" height="448" rx="32" fill="#635BFF"/>
+          <path d="M 320 32 L 448 160 L 352 160 C 334.327 160 320 145.673 320 128 L 320 32 Z" fill="#ffffff" opacity="0.4"/>
+          <path d="M 140 220 C 140 190, 200 190, 200 220 C 200 250, 140 250, 140 280 C 140 310, 200 310, 200 280" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+          <path d="M 230 220 C 230 190, 290 190, 290 220 C 290 250, 230 250, 230 280 C 230 310, 290 310, 290 280" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+          <rect x="320" y="196" width="52" height="116" rx="14" fill="#FFFFFF"/>
+          <path d="M 140 370 L 370 370" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round" opacity="0.8"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-title">SSPDF</span>
+          <span class="brand-badge">Client-Side Engine</span>
+        </div>
       </div>
 
-      <button onclick="zoomIn()">
-        +
-      </button>
+      <nav class="app-menu">
+        <button class="menu-btn" id="btn-file-open" title="Open PDF (Ctrl+O)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+          <span>Open</span>
+        </button>
+        <button class="menu-btn" id="btn-blank-pdf" title="Create New Blank PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          <span class="desktop-only">New PDF</span>
+        </button>
+        <button class="menu-btn" id="btn-merge-mode" title="Merge PDFs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          <span class="desktop-only">Merge</span>
+        </button>
+        <button class="menu-btn" id="btn-split-mode" title="Split PDF">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+          <span class="desktop-only">Split</span>
+        </button>
+      </nav>
 
-      <button onclick="fitToScreen()">
-        ⛶
-      </button>
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-search-toggle" title="Search Text (Ctrl+F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-theme-toggle" title="Toggle Light/Dark Theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-shortcuts" title="Keyboard Shortcuts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-about" title="About SSPDF & Privacy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+        <button class="primary-btn" id="btn-export" title="Export Modified PDF (Ctrl+S)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Export PDF</span>
+        </button>
+      </div>
+    </header>
 
+    <!-- FLOATING SEARCH BAR -->
+    <div id="search-bar" class="search-bar hidden">
+      <input type="text" id="search-input" placeholder="Search text in document..." />
+      <span id="search-count" class="search-count">0 / 0</span>
+      <button id="btn-search-prev" class="sm-icon-btn" title="Previous Result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></button>
+      <button id="btn-search-next" class="sm-icon-btn" title="Next Result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <button id="btn-search-close" class="sm-icon-btn" title="Close Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
 
+    <!-- ANNOTATION TOOLBAR -->
+    <nav class="secondary-toolbar" id="main-toolbar">
+      <div class="tool-group">
+        <button class="tool-btn active" data-tool="select" title="Select / Move Elements (V)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7 18 3-7 7-3L3 3z"/></svg>
+          <span>Select</span>
+        </button>
+        <button class="tool-btn" data-tool="pan" title="Pan / Hand Tool (H)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 11V6a2 2 0 00-2-2v0a2 2 0 00-2 2v0M14 10V4a2 2 0 00-2-2v0a2 2 0 00-2 2v6M10 10.5V6a2 2 0 00-2-2v0a2 2 0 00-2 2v8M18 11a2 2 0 012 2v4a8 8 0 01-8 8h-2c-2.5 0-4.8-1-6.4-2.8L2 20"/></svg>
+          <span>Hand</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="text" title="Add Text Overlay (T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          <span>Text</span>
+        </button>
+        <button class="tool-btn" data-tool="highlight" title="Highlight Text">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <span>Highlight</span>
+        </button>
+        <button class="tool-btn" data-tool="draw" title="Freehand Draw / Pen (P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+          <span>Draw</span>
+        </button>
+        <button class="tool-btn" data-tool="whiteout" title="Whiteout / Mask Area">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 4"/><path d="M9 9l6 6M15 9l-6 6"/></svg>
+          <span>Whiteout</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="tool-group">
+        <button class="tool-btn" data-tool="rectangle" title="Rectangle Shape">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <span>Box</span>
+        </button>
+        <button class="tool-btn" data-tool="circle" title="Circle Shape">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+          <span>Circle</span>
+        </button>
+        <button class="tool-btn" data-tool="line" title="Draw Line / Arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="12 5 19 5 19 12"/></svg>
+          <span>Arrow</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="tool-group">
+        <button class="tool-btn" id="btn-tool-stamp" title="Checkmark / Stamp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Check</span>
+        </button>
+        <button class="tool-btn" id="btn-tool-signature" title="Add Signature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 19.5c-2 1-5 1-7-1s-3-4-5-4-3 2-3 3 2 4 4 4 6-2 7-4"/><path d="M4 8l4-4 4 4"/><line x1="8" y1="4" x2="8" y2="16"/></svg>
+          <span>Sign</span>
+        </button>
+        <button class="tool-btn" id="btn-tool-image" title="Insert Image">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span>Image</span>
+        </button>
+      </div>
+
+      <div class="toolbar-divider"></div>
+
+      <div class="tool-group history-controls">
+        <button class="icon-btn" id="btn-undo" title="Undo (Ctrl+Z)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-redo" title="Redo (Ctrl+Shift+Z)" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7"/></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- WORKSPACE AREA -->
+    <main class="workspace">
+      
+      <!-- WELCOME / EMPTY STATE LANDING SCREEN -->
+      <section id="welcome-screen" class="welcome-screen">
+        <div class="welcome-card">
+          <div class="welcome-hero">
+            <svg class="welcome-logo" viewBox="0 0 512 512">
+              <rect x="64" y="32" width="384" height="448" rx="32" fill="#635BFF"/>
+              <path d="M 320 32 L 448 160 L 352 160 C 334.327 160 320 145.673 320 128 L 320 32 Z" fill="#ffffff" opacity="0.4"/>
+              <path d="M 140 220 C 140 190, 200 190, 200 220 C 200 250, 140 250, 140 280 C 140 310, 200 310, 200 280" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+              <path d="M 230 220 C 230 190, 290 190, 290 220 C 290 250, 230 250, 230 280 C 230 310, 290 310, 290 280" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" fill="none"/>
+              <rect x="320" y="196" width="52" height="116" rx="14" fill="#FFFFFF"/>
+              <path d="M 140 370 L 370 370" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round" opacity="0.8"/>
+            </svg>
+            <h1>Powerful PDF Editing. Private by Design.</h1>
+            <p class="subtitle">Edit, annotate, sign, merge, split, and organize PDFs completely inside your browser. No files are ever sent to any server.</p>
+          </div>
+
+          <div class="drop-zone" id="welcome-dropzone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="drop-text">
+              <strong>Drag & Drop your PDF file here</strong>
+              <span>or browse from your local device</span>
+            </div>
+            <div class="welcome-buttons">
+              <button class="primary-btn lg" id="btn-welcome-open">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                <span>Select PDF File</span>
+              </button>
+              <button class="secondary-btn lg" id="btn-welcome-blank">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>Create Blank PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="privacy-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            <div>
+              <strong>100% Client-Side Processing</strong>
+              <span>Your files never leave your browser. Zero external backend API calls.</span>
+            </div>
+          </div>
+
+          <div class="features-grid">
+            <div class="feature-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <h3>Annotate & Draw</h3>
+              <p>Add text, whiteouts, freehand drawings, highlights, lines, arrows, and geometric shapes.</p>
+            </div>
+            <div class="feature-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 19.5c-2 1-5 1-7-1s-3-4-5-4-3 2-3 3 2 4 4 4 6-2 7-4"/><line x1="8" y1="4" x2="8" y2="16"/></svg>
+              <h3>Sign & Stamp</h3>
+              <p>Draw signatures, upload signature images, or type custom signatures onto documents.</p>
+            </div>
+            <div class="feature-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <h3>Page Operations</h3>
+              <p>Reorder pages via drag & drop, rotate, duplicate, insert blank pages, or delete unwanted pages.</p>
+            </div>
+            <div class="feature-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/></svg>
+              <h3>Merge & Split</h3>
+              <p>Combine multiple PDFs into one document or extract specific page ranges securely.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACTIVE EDITOR LAYOUT -->
+      <div id="editor-layout" class="editor-layout hidden">
+        
+        <!-- SIDEBAR: THUMBNAILS -->
+        <aside class="sidebar-thumbnails" id="sidebar-thumbnails">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Pages (<span id="page-count-badge">0</span>)</span>
+            <div class="sidebar-actions">
+              <button class="sm-icon-btn" id="btn-sidebar-select-all" title="Select All Pages">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
+              </button>
+              <button class="sm-icon-btn" id="btn-sidebar-rotate" title="Rotate Selected Right (90°)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67"/></svg>
+              </button>
+              <button class="sm-icon-btn danger" id="btn-sidebar-delete" title="Delete Selected Pages">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="thumbnail-list" id="thumbnail-container">
+            <!-- Dynamic thumbnails rendered here -->
+          </div>
+
+          <div class="sidebar-footer">
+            <button class="secondary-btn sm full-width" id="btn-add-blank-page">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add Blank Page</span>
+            </button>
+          </div>
+        </aside>
+
+        <!-- CENTER CANVAS CONTAINER -->
+        <section class="main-canvas-area" id="canvas-scroll-container">
+          <div class="pdf-page-wrapper" id="page-wrapper">
+            <!-- PDF Render Canvas -->
+            <canvas id="pdf-render-canvas"></canvas>
+            
+            <!-- Interactive Annotation Canvas Layer -->
+            <canvas id="annotation-canvas"></canvas>
+
+            <!-- Text & Form Overlay Elements Container -->
+            <div id="overlay-container" class="overlay-container"></div>
+          </div>
+        </section>
+
+        <!-- RIGHT SIDEBAR: PROPERTIES & SELECTION PANEL -->
+        <aside class="sidebar-properties" id="sidebar-properties">
+          <div class="sidebar-header">
+            <span class="sidebar-title">Properties</span>
+          </div>
+          
+          <div class="properties-content" id="properties-content">
+            <!-- Tool contextual configuration controls -->
+            <div class="property-group">
+              <label>Stroke & Text Color</label>
+              <div class="color-picker-grid">
+                <button class="color-swatch active" style="background: #000000" data-color="#000000"></button>
+                <button class="color-swatch" style="background: #635BFF" data-color="#635BFF"></button>
+                <button class="color-swatch" style="background: #DC2626" data-color="#DC2626"></button>
+                <button class="color-swatch" style="background: #16A34A" data-color="#16A34A"></button>
+                <button class="color-swatch" style="background: #F59E0B" data-color="#F59E0B"></button>
+                <button class="color-swatch" style="background: #FFFFFF; border: 1px solid #CBD5E1;" data-color="#FFFFFF"></button>
+                <input type="color" id="custom-color-input" value="#000000" title="Custom Color" />
+              </div>
+            </div>
+
+            <div class="property-group">
+              <label>Thickness / Stroke Width</label>
+              <div class="range-with-val">
+                <input type="range" id="prop-stroke-width" min="1" max="30" value="3" />
+                <span id="prop-stroke-val">3px</span>
+              </div>
+            </div>
+
+            <div class="property-group">
+              <label>Opacity</label>
+              <div class="range-with-val">
+                <input type="range" id="prop-opacity" min="0.1" max="1.0" step="0.05" value="1.0" />
+                <span id="prop-opacity-val">100%</span>
+              </div>
+            </div>
+
+            <div class="property-group text-only-prop">
+              <label>Font Size</label>
+              <div class="range-with-val">
+                <input type="range" id="prop-font-size" min="8" max="72" value="16" />
+                <span id="prop-font-val">16px</span>
+              </div>
+            </div>
+
+            <div class="property-group text-only-prop">
+              <label>Font Family</label>
+              <select id="prop-font-family" class="prop-select">
+                <option value="Inter, sans-serif">Inter (Sans-serif)</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                <option value="Times New Roman, serif">Times New Roman</option>
+                <option value="Courier New, monospace">Courier New</option>
+                <option value="Arial, sans-serif">Arial</option>
+              </select>
+            </div>
+
+            <div class="property-group">
+              <button class="secondary-btn danger full-width" id="btn-delete-selected" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                <span>Delete Selected Item</span>
+              </button>
+            </div>
+            
+            <div class="ai-teaser-box">
+              <div class="ai-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#635BFF" stroke-width="2"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 8v4l3 3"/></svg>
+                <strong>Smart Assistance</strong>
+              </div>
+              <p>AI Summarization & Document Q&A features can be configured safely via personal local API proxies.</p>
+              <button class="secondary-btn sm full-width" id="btn-ai-config">Configure AI</button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </main>
+
+    <!-- BOTTOM STATUS & NAVIGATION FOOTER BAR -->
+    <footer class="bottom-bar">
+      <div class="nav-controls">
+        <button class="sm-icon-btn" id="btn-prev-page" title="Previous Page (Left Arrow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="page-indicator">
+          Page <input type="number" id="current-page-input" value="1" min="1" max="1" /> of <span id="total-pages-count">1</span>
+        </span>
+        <button class="sm-icon-btn" id="btn-next-page" title="Next Page (Right Arrow)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+
+      <div class="zoom-controls">
+        <button class="sm-icon-btn" id="btn-zoom-out" title="Zoom Out (-)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+        <select id="zoom-select" class="zoom-select">
+          <option value="auto">Automatic</option>
+          <option value="page-fit">Fit to Page</option>
+          <option value="page-width">Fit to Width</option>
+          <option value="0.5">50%</option>
+          <option value="0.75">75%</option>
+          <option value="1.0" selected>100%</option>
+          <option value="1.25">125%</option>
+          <option value="1.5">150%</option>
+          <option value="2.0">200%</option>
+        </select>
+        <button class="sm-icon-btn" id="btn-zoom-in" title="Zoom In (+)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+      </div>
+
+      <div class="status-info">
+        <span id="status-text">Ready</span>
+      </div>
+    </footer>
   </div>
 
+  <!-- HIDDEN FILE INPUT -->
+  <input type="file" id="hidden-file-input" accept="application/pdf" class="hidden" />
+  <input type="file" id="hidden-image-input" accept="image/png, image/jpeg, image/webp" class="hidden" />
 
-  <!-- PDF VIEWER -->
+  <!-- MODALS CONTAINER -->
 
-  <div
-    class="main-document"
-    id="pdfViewer">
-
-
-    <!-- EMPTY -->
-
-    <div
-      class="empty-state"
-      id="emptyState">
-
-      <div class="upload-icon">
-        📄
+  <!-- SIGNATURE DRAW / TYPE MODAL -->
+  <div class="modal-backdrop hidden" id="modal-signature">
+    <div class="modal-box md">
+      <div class="modal-header">
+        <h3>Add Signature</h3>
+        <button class="modal-close" data-close="modal-signature">&times;</button>
       </div>
+      <div class="modal-body">
+        <div class="tabs-nav">
+          <button class="tab-btn active" data-tab="tab-sig-draw">Draw</button>
+          <button class="tab-btn" data-tab="tab-sig-type">Type</button>
+          <button class="tab-btn" data-tab="tab-sig-upload">Upload Image</button>
+        </div>
+        
+        <div class="tab-content active" id="tab-sig-draw">
+          <div class="sig-canvas-wrapper">
+            <canvas id="signature-pad" width="500" height="200"></canvas>
+          </div>
+          <div class="sig-tools">
+            <button class="secondary-btn sm" id="btn-clear-sig">Clear</button>
+            <div class="sig-colors">
+              <span class="color-dot active" style="background:#000000" data-sig-color="#000000"></span>
+              <span class="color-dot" style="background:#1E3A8A" data-sig-color="#1E3A8A"></span>
+              <span class="color-dot" style="background:#DC2626" data-sig-color="#DC2626"></span>
+            </div>
+          </div>
+        </div>
 
-      <h1>
-        Open a PDF to get started
-      </h1>
+        <div class="tab-content hidden" id="tab-sig-type">
+          <input type="text" id="type-sig-input" placeholder="Type your full name..." class="modal-input" />
+          <div class="sig-type-preview" id="sig-type-preview">Signature Preview</div>
+        </div>
 
-      <p>
-        Edit, annotate, organize and manage
-        your PDF files directly in your browser.
-      </p>
-
-      <button
-        class="choose-btn"
-        onclick="openFile()">
-
-        📂 Choose PDF
-
-      </button>
-
-
-      <input
-        type="file"
-        id="pdfFile"
-        accept="application/pdf"
-        style="display:none"
-      >
-
-
-      <div class="privacy">
-        🔒 Your files stay on your device
+        <div class="tab-content hidden" id="tab-sig-upload">
+          <input type="file" id="sig-image-file" accept="image/png, image/jpeg" class="modal-input" />
+        </div>
       </div>
-
+      <div class="modal-footer">
+        <button class="secondary-btn" data-close="modal-signature">Cancel</button>
+        <button class="primary-btn" id="btn-apply-signature">Insert Signature</button>
+      </div>
     </div>
-
   </div>
 
-</section>
-
-
-<!-- =========================
-     RIGHT PANEL
-========================= -->
-
-<aside class="right-panel">
-
-  <div class="panel-title">
-    DOCUMENT
+  <!-- MERGE MODAL -->
+  <div class="modal-backdrop hidden" id="modal-merge">
+    <div class="modal-box lg">
+      <div class="modal-header">
+        <h3>Merge Multiple PDF Files</h3>
+        <button class="modal-close" data-close="modal-merge">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Combine multiple PDF documents into a single unified file. Drag files to reorder priority.</p>
+        <div class="merge-list" id="merge-file-list">
+          <div class="empty-merge-state">No files added yet. Click below to append PDFs.</div>
+        </div>
+        <input type="file" id="merge-file-input" accept="application/pdf" multiple class="hidden" />
+        <button class="secondary-btn full-width" id="btn-add-merge-files">+ Add PDF Files</button>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" data-close="modal-merge">Cancel</button>
+        <button class="primary-btn" id="btn-execute-merge" disabled>Merge & Export</button>
+      </div>
+    </div>
   </div>
 
-
-  <div class="panel-card">
-    <strong>Pages</strong>
-    <span id="infoPages">
-      No PDF opened
-    </span>
+  <!-- SPLIT MODAL -->
+  <div class="modal-backdrop hidden" id="modal-split">
+    <div class="modal-box md">
+      <div class="modal-header">
+        <h3>Split PDF Document</h3>
+        <button class="modal-close" data-close="modal-split">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Split Strategy</label>
+          <select id="split-mode-select" class="modal-input">
+            <option value="all">Extract all pages into single individual PDFs (ZIP)</option>
+            <option value="range">Extract specific page range</option>
+          </select>
+        </div>
+        <div class="form-group" id="split-range-group">
+          <label>Page Ranges (e.g. 1-3, 5, 7-10)</label>
+          <input type="text" id="split-range-input" class="modal-input" placeholder="1-3, 4-6" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" data-close="modal-split">Cancel</button>
+        <button class="primary-btn" id="btn-execute-split">Split PDF</button>
+      </div>
+    </div>
   </div>
 
-
-  <div class="panel-card">
-    <strong>Zoom</strong>
-    <span id="infoZoom">
-      100%
-    </span>
+  <!-- ABOUT & PRIVACY MODAL -->
+  <div class="modal-backdrop hidden" id="modal-about">
+    <div class="modal-box md">
+      <div class="modal-header">
+        <h3>About SSPDF</h3>
+        <button class="modal-close" data-close="modal-about">&times;</button>
+      </div>
+      <div class="modal-body about-body">
+        <div class="brand-badge-large">SSPDF v1.0.0</div>
+        <h4>Powerful PDF Editing. Private by Design.</h4>
+        <p>SSPDF is engineered as a zero-backend, pure client-side PDF workspace. Processing occurs exclusively within your browser's local V8 JavaScript sandbox memory state.</p>
+        
+        <div class="privacy-checklist">
+          <div class="check-item"><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> No files uploaded to any server</div>
+          <div class="check-item"><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Works offline & hosted on GitHub Pages</div>
+          <div class="check-item"><svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Open source libraries via trustworthy CDN static links</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-btn" data-close="modal-about">Close</button>
+      </div>
+    </div>
   </div>
 
-
-  <div class="panel-card">
-    <strong>File</strong>
-    <span id="infoFile">
-      No file selected
-    </span>
+  <!-- KEYBOARD SHORTCUTS MODAL -->
+  <div class="modal-backdrop hidden" id="modal-shortcuts">
+    <div class="modal-box md">
+      <div class="modal-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="modal-close" data-close="modal-shortcuts">&times;</button>
+      </div>
+      <div class="modal-body">
+        <table class="shortcuts-table">
+          <tr><td><kbd>Ctrl</kbd> + <kbd>O</kbd></td><td>Open PDF File</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>S</kbd></td><td>Export PDF File</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>Z</kbd></td><td>Undo Action</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd></td><td>Redo Action</td></tr>
+          <tr><td><kbd>Ctrl</kbd> + <kbd>F</kbd></td><td>Search Text</td></tr>
+          <tr><td><kbd>Delete</kbd> / <kbd>Backspace</kbd></td><td>Delete Selected Object</td></tr>
+          <tr><td><kbd>V</kbd> / <kbd>H</kbd> / <kbd>T</kbd> / <kbd>P</kbd></td><td>Select, Hand, Text, Draw tools</td></tr>
+          <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom In / Zoom Out</td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-btn" data-close="modal-shortcuts">Got it</button>
+      </div>
+    </div>
   </div>
 
-</aside>
-
-
-</main>
-
-
-<!-- =========================
-     MOBILE BOTTOM
-========================= -->
-
-<nav class="mobile-bottom">
-
-  <button
-    class="bottom-tool"
-    onclick="togglePageSidebar()">
-
-    <span>📄</span>
-    Pages
-
-  </button>
-
-
-  <button
-    class="bottom-tool"
-    onclick="activateTextTool()">
-
-    <span>✏️</span>
-    Text
-
-  </button>
-
-
-  <button class="bottom-tool">
-
-    <span>🖍️</span>
-    Mark
-
-  </button>
-
-
-  <button class="bottom-tool">
-
-    <span>✍️</span>
-    Sign
-
-  </button>
-
-
-  <button
-    class="bottom-tool"
-    onclick="toggleMenu()">
-
-    <span>☰</span>
-    Tools
-
-  </button>
-
-</nav>
-
-
-<div
-  class="loading"
-  id="loading">
-  Processing PDF...
-</div>
-
-
-<!-- =========================
-     PDF.JS
-========================= -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-
-<!-- =========================
-     PDF-LIB
-========================= -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-
-
-<!-- =========================
-     FONTKIT
-========================= -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fontkit/2.0.2/fontkit.umd.min.js"></script>
-
-
-<script>
-
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
-
-let currentPDF = null;
-
-let originalPDFBytes = null;
-
-let originalFileName = "document.pdf";
-
-let zoomLevel = 1.3;
-
-let pageRotations = {};
-
-let deletedPages = new Set();
-
-let selectedPage = 1;
-
-let selectedTextBox = null;
-
-let textMode = false;
-
-let textBoxCounter = 0;
-
-
-/* =====================================================
-   UNDO / REDO
-===================================================== */
-
-let undoStack = [];
-
-let redoStack = [];
-
-
-/* =====================================================
-   PDF.JS WORKER
-===================================================== */
-
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-
-/* =====================================================
-   OPEN FILE
-===================================================== */
-
-function openFile(){
-
-  const input =
-    document.getElementById("pdfFile");
-
-  if(input){
-    input.click();
-  }
-
-}
-
-
-/* =====================================================
-   FILE CHANGE
-===================================================== */
-
-document
-.getElementById("pdfFile")
-.addEventListener("change",async function(){
-
-  const file = this.files[0];
-
-  if(!file){
-    return;
-  }
-
-
-  if(
-    file.type !== "application/pdf" &&
-    !file.name.toLowerCase().endsWith(".pdf")
-  ){
-
-    alert("कृपया केवल PDF file चुनें।");
-
-    return;
-  }
-
-
-  try{
-
-    showLoading(true);
-
-    originalFileName = file.name;
-
-
-    const buffer =
-      await file.arrayBuffer();
-
-
-    originalPDFBytes =
-      new Uint8Array(buffer);
-
-
-    currentPDF =
-      await pdfjsLib
-      .getDocument({
-        data:originalPDFBytes
-      })
-      .promise;
-
-
-    pageRotations = {};
-
-    deletedPages = new Set();
-
-    selectedPage = 1;
-
-    zoomLevel = 1.3;
-
-    clearTextBoxes();
-
-    disableTextMode();
-
-    await renderPDF();
-
-    updateDocumentInfo();
-
-    showLoading(false);
-
-
-  }catch(error){
-
-    showLoading(false);
-
-    console.error(error);
-
-    alert(
-      "PDF खोलने में समस्या हुई.\n\n" +
-      error.message
-    );
-
-  }
-
-});
-
-
-/* =====================================================
-   RENDER PDF
-===================================================== */
-
-async function renderPDF(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  const viewer =
-    document.getElementById("pdfViewer");
-
-  const thumbnails =
-    document.getElementById("thumbnails");
-
-
-  viewer.innerHTML = "";
-
-  thumbnails.innerHTML = "";
-
-
-  for(
-    let pageNumber = 1;
-    pageNumber <= currentPDF.numPages;
-    pageNumber++
-  ){
-
-    if(deletedPages.has(pageNumber)){
-      continue;
-    }
-
-
-    await renderMainPage(pageNumber);
-
-    await renderThumbnail(pageNumber);
-
-  }
-
-
-  updateZoomText();
-
-  updateDocumentInfo();
-
-}
-
-
-/* =====================================================
-   MAIN PAGE
-===================================================== */
-
-async function renderMainPage(pageNumber){
-
-  const page =
-    await currentPDF.getPage(pageNumber);
-
-
-  const rotation =
-    pageRotations[pageNumber] || 0;
-
-
-  const viewport =
-    page.getViewport({
-      scale:zoomLevel,
-      rotation:rotation
-    });
-
-
-  const wrapper =
-    document.createElement("div");
-
-
-  wrapper.className =
-    "pdf-page-wrapper";
-
-
-  wrapper.dataset.page =
-    pageNumber;
-
-
-  if(pageNumber === selectedPage){
-
-    wrapper.classList.add(
-      "selected-page"
-    );
-
-  }
-
-
-  const label =
-    document.createElement("div");
-
-
-  label.className =
-    "page-label";
-
-
-  label.textContent =
-    "Page " + pageNumber;
-
-
-  const canvas =
-    document.createElement("canvas");
-
-
-  const context =
-    canvas.getContext("2d");
-
-
-  canvas.width =
-    viewport.width;
-
-  canvas.height =
-    viewport.height;
-
-
-  wrapper.appendChild(label);
-
-  wrapper.appendChild(canvas);
-
-
-  document
-  .getElementById("pdfViewer")
-  .appendChild(wrapper);
-
-
-  await page.render({
-
-    canvasContext:context,
-
-    viewport:viewport
-
-  }).promise;
-
-
-  wrapper.addEventListener(
-    "click",
-    function(event){
-
-      if(
-        event.target === wrapper ||
-        event.target === canvas
-      ){
-
-        selectedPage =
-          pageNumber;
-
-        updateSelectedPage();
-
-      }
-
-    }
-  );
-
-
-  /* Text click */
-
-  wrapper.addEventListener(
-    "dblclick",
-    function(event){
-
-      if(textMode){
-
-        event.stopPropagation();
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   THUMBNAIL
-===================================================== */
-
-async function renderThumbnail(pageNumber){
-
-  const page =
-    await currentPDF.getPage(pageNumber);
-
-
-  const rotation =
-    pageRotations[pageNumber] || 0;
-
-
-  const viewport =
-    page.getViewport({
-
-      scale:.25,
-
-      rotation:rotation
-
-    });
-
-
-  const box =
-    document.createElement("div");
-
-
-  box.className =
-    "page-thumbnail";
-
-
-  box.dataset.page =
-    pageNumber;
-
-
-  if(pageNumber === selectedPage){
-
-    box.classList.add("active");
-
-  }
-
-
-  const canvas =
-    document.createElement("canvas");
-
-
-  const context =
-    canvas.getContext("2d");
-
-
-  canvas.width =
-    viewport.width;
-
-  canvas.height =
-    viewport.height;
-
-
-  const number =
-    document.createElement("div");
-
-
-  number.className =
-    "page-number";
-
-
-  number.textContent =
-    "Page " + pageNumber;
-
-
-  const actions =
-    document.createElement("div");
-
-
-  actions.className =
-    "page-actions";
-
-
-  /* Rotate */
-
-  const rotateButton =
-    document.createElement("button");
-
-
-  rotateButton.innerHTML =
-    "↻";
-
-
-  rotateButton.title =
-    "Rotate page";
-
-
-  rotateButton.onclick =
-  function(event){
-
-    event.stopPropagation();
-
-    rotatePage(pageNumber);
-
-  };
-
-
-  /* Delete */
-
-  const deleteButton =
-    document.createElement("button");
-
-
-  deleteButton.innerHTML =
-    "🗑";
-
-
-  deleteButton.title =
-    "Delete page";
-
-
-  deleteButton.onclick =
-  function(event){
-
-    event.stopPropagation();
-
-    deletePage(pageNumber);
-
-  };
-
-
-  actions.appendChild(
-    rotateButton
-  );
-
-  actions.appendChild(
-    deleteButton
-  );
-
-
-  box.appendChild(canvas);
-
-  box.appendChild(number);
-
-  box.appendChild(actions);
-
-
-  document
-  .getElementById("thumbnails")
-  .appendChild(box);
-
-
-  await page.render({
-
-    canvasContext:context,
-
-    viewport:viewport
-
-  }).promise;
-
-
-  box.onclick =
-  function(){
-
-    selectedPage =
-      pageNumber;
-
-    scrollToPage(pageNumber);
-
-    updateSelectedPage();
-
-  };
-
-}
-
-
-/* =====================================================
-   SELECT PAGE
-===================================================== */
-
-function updateSelectedPage(){
-
-  document
-  .querySelectorAll(".pdf-page-wrapper")
-  .forEach(function(el){
-
-    el.classList.remove(
-      "selected-page"
-    );
-
-  });
-
-
-  document
-  .querySelectorAll(".page-thumbnail")
-  .forEach(function(el){
-
-    el.classList.remove(
-      "active"
-    );
-
-  });
-
-
-  const page =
-    document.querySelector(
-      '.pdf-page-wrapper[data-page="' +
-      selectedPage +
-      '"]'
-    );
-
-
-  const thumb =
-    document.querySelector(
-      '.page-thumbnail[data-page="' +
-      selectedPage +
-      '"]'
-    );
-
-
-  if(page){
-    page.classList.add(
-      "selected-page"
-    );
-  }
-
-
-  if(thumb){
-    thumb.classList.add(
-      "active"
-    );
-  }
-
-}
-
-
-/* =====================================================
-   SCROLL PAGE
-===================================================== */
-
-function scrollToPage(pageNumber){
-
-  const page =
-    document.querySelector(
-      '.pdf-page-wrapper[data-page="' +
-      pageNumber +
-      '"]'
-    );
-
-
-  if(page){
-
-    page.scrollIntoView({
-
-      behavior:"smooth",
-
-      block:"start"
-
-    });
-
-  }
-
-}
-
-
-/* =====================================================
-   ROTATE
-===================================================== */
-
-async function rotatePage(pageNumber){
-
-  pageRotations[pageNumber] =
-    (pageRotations[pageNumber] || 0) + 90;
-
-
-  if(pageRotations[pageNumber] >= 360){
-
-    pageRotations[pageNumber] = 0;
-
-  }
-
-
-  selectedPage =
-    pageNumber;
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   DELETE PAGE
-===================================================== */
-
-async function deletePage(pageNumber){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  const remaining =
-    currentPDF.numPages -
-    deletedPages.size -
-    1;
-
-
-  if(remaining < 1){
-
-    alert(
-      "कम से कम एक page रखना जरूरी है।"
-    );
-
-    return;
-
-  }
-
-
-  if(
-    !confirm(
-      "क्या आप Page " +
-      pageNumber +
-      " को हटाना चाहते हैं?"
-    )
-  ){
-
-    return;
-
-  }
-
-
-  deletedPages.add(pageNumber);
-
-
-  selectedPage = 1;
-
-
-  while(
-    deletedPages.has(selectedPage) &&
-    selectedPage <= currentPDF.numPages
-  ){
-
-    selectedPage++;
-
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ZOOM IN
-===================================================== */
-
-async function zoomIn(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel += .2;
-
-
-  if(zoomLevel > 3){
-    zoomLevel = 3;
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ZOOM OUT
-===================================================== */
-
-async function zoomOut(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel -= .2;
-
-
-  if(zoomLevel < .5){
-    zoomLevel = .5;
-  }
-
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   FIT
-===================================================== */
-
-async function fitToScreen(){
-
-  if(!currentPDF){
-    return;
-  }
-
-
-  zoomLevel = 1;
-
-  await renderPDF();
-
-}
-
-
-/* =====================================================
-   ZOOM TEXT
-===================================================== */
-
-function updateZoomText(){
-
-  const value =
-    Math.round(
-      (zoomLevel / 1.3) * 100
-    );
-
-
-  const el =
-    document.getElementById(
-      "zoomValue"
-    );
-
-
-  if(el){
-    el.textContent =
-      value + "%";
-  }
-
-
-  const info =
-    document.getElementById(
-      "infoZoom"
-    );
-
-
-  if(info){
-    info.textContent =
-      value + "%";
-  }
-
-}
-
-
-/* =====================================================
-   DOCUMENT INFO
-===================================================== */
-
-function updateDocumentInfo(){
-
-  const pages =
-    currentPDF
-    ? currentPDF.numPages -
-      deletedPages.size
-    : 0;
-
-
-  document.getElementById(
-    "infoPages"
-  ).textContent =
-    currentPDF
-    ? pages
-    : "No PDF opened";
-
-
-  document.getElementById(
-    "infoFile"
-  ).textContent =
-    currentPDF
-    ? originalFileName
-    : "No file selected";
-
-}
-
-
-/* =====================================================
-   MOBILE MENU
-===================================================== */
-
-function toggleMenu(){
-
-  const sidebar =
-    document.getElementById(
-      "sidebar"
-    );
-
-
-  if(sidebar){
-
-    sidebar.classList.toggle(
-      "open"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   PAGE SIDEBAR
-===================================================== */
-
-function togglePageSidebar(){
-
-  const sidebar =
-    document.getElementById(
-      "pageSidebar"
-    );
-
-
-  if(sidebar){
-
-    sidebar.classList.toggle(
-      "open"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   TOOL SELECTION
-===================================================== */
-
-function selectTool(button,type){
-
-  document
-  .querySelectorAll(".tool")
-  .forEach(function(el){
-
-    el.classList.remove("active");
-
-  });
-
-
-  button.classList.add("active");
-
-
-  if(type === "text"){
-
-    activateTextTool();
-
-  }
-
-}
-
-
-/* =====================================================
-   ACTIVATE TEXT
-===================================================== */
-
-function activateTextTool(){
-
-  if(!currentPDF){
-
-    alert(
-      "पहले PDF खोलें।"
-    );
-
-    return;
-
-  }
-
-
-  textMode = true;
-
-
-  document.body.classList.add(
-    "text-mode"
-  );
-
-
-  document
-  .getElementById("textToolbar")
-  .classList.add("show");
-
-
-  alert(
-    "अब PDF page पर जहाँ text लिखना है वहाँ click करें।"
-  );
-
-}
-
-
-/* =====================================================
-   DISABLE TEXT
-===================================================== */
-
-function disableTextMode(){
-
-  textMode = false;
-
-
-  document.body.classList.remove(
-    "text-mode"
-  );
-
-
-  const toolbar =
-    document.getElementById(
-      "textToolbar"
-    );
-
-
-  if(toolbar){
-
-    toolbar.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   CREATE TEXT BOX ON PAGE
-===================================================== */
-
-document
-.getElementById("pdfViewer")
-.addEventListener(
-  "click",
-  function(event){
-
-    if(!textMode){
-      return;
-    }
-
-
-    const pageWrapper =
-      event.target.closest(
-        ".pdf-page-wrapper"
-      );
-
-
-    if(!pageWrapper){
-      return;
-    }
-
-
-    /* Don't create when clicking existing text */
-
-    if(
-      event.target.closest(
-        ".text-box"
-      )
-    ){
-
-      return;
-
-    }
-
-
-    const rect =
-      pageWrapper.getBoundingClientRect();
-
-
-    let x =
-      event.clientX -
-      rect.left;
-
-
-    let y =
-      event.clientY -
-      rect.top;
-
-
-    createTextBox(
-      pageWrapper,
-      x,
-      y
-    );
-
-  }
-);
-
-
-/* =====================================================
-   CREATE TEXT BOX
-===================================================== */
-
-function createTextBox(
-  pageWrapper,
-  x,
-  y
-){
-
-  textBoxCounter++;
-
-
-  const box =
-    document.createElement("div");
-
-
-  box.className =
-    "text-box selected";
-
-
-  box.dataset.id =
-    textBoxCounter;
-
-
-  box.dataset.page =
-    pageWrapper.dataset.page;
-
-
-  box.style.left =
-    Math.max(0,x) + "px";
-
-
-  box.style.top =
-    Math.max(0,y) + "px";
-
-
-  box.style.width =
-    "220px";
-
-
-  box.style.minHeight =
-    "35px";
-
-
-  const textarea =
-    document.createElement("textarea");
-
-
-  textarea.placeholder =
-    "यहाँ text लिखें...";
-
-
-  textarea.value =
-    "";
-
-
-  const deleteButton =
-    document.createElement("button");
-
-
-  deleteButton.className =
-    "text-box-delete";
-
-
-  deleteButton.innerHTML =
-    "×";
-
-
-  deleteButton.onclick =
-  function(event){
-
-    event.stopPropagation();
-
-    box.remove();
-
-    selectedTextBox = null;
-
-  };
-
-
-  box.appendChild(
-    textarea
-  );
-
-  box.appendChild(
-    deleteButton
-  );
-
-
-  pageWrapper.appendChild(
-    box
-  );
-
-
-  selectedTextBox =
-    box;
-
-
-  textarea.focus();
-
-
-  setupTextBoxDrag(
-    box,
-    pageWrapper
-  );
-
-
-  applyTextStyle();
-
-}
-
-
-/* =====================================================
-   SELECT TEXT BOX
-===================================================== */
-
-document
-.getElementById("pdfViewer")
-.addEventListener(
-  "mousedown",
-  function(event){
-
-    const box =
-      event.target.closest(
-        ".text-box"
-      );
-
-
-    if(!box){
-      return;
-    }
-
-
-    event.stopPropagation();
-
-
-    selectTextBox(box);
-
-  }
-);
-
-
-/* =====================================================
-   SELECT
-===================================================== */
-
-function selectTextBox(box){
-
-  document
-  .querySelectorAll(".text-box")
-  .forEach(function(el){
-
-    el.classList.remove(
-      "selected"
-    );
-
-  });
-
-
-  box.classList.add(
-    "selected"
-  );
-
-
-  selectedTextBox =
-    box;
-
-
-  loadTextStyle();
-
-}
-
-
-/* =====================================================
-   DRAG TEXT BOX
-===================================================== */
-
-function setupTextBoxDrag(
-  box,
-  pageWrapper
-){
-
-  let dragging = false;
-
-  let startX = 0;
-
-  let startY = 0;
-
-  let originalLeft = 0;
-
-  let originalTop = 0;
-
-
-  box.addEventListener(
-    "pointerdown",
-    function(event){
-
-      if(
-        event.target.tagName ===
-        "TEXTAREA"
-      ){
-
-        return;
-
-      }
-
-
-      if(
-        event.target.classList.contains(
-          "text-box-delete"
-        )
-      ){
-
-        return;
-
-      }
-
-
-      dragging = true;
-
-
-      box.setPointerCapture(
-        event.pointerId
-      );
-
-
-      startX =
-        event.clientX;
-
-      startY =
-        event.clientY;
-
-
-      originalLeft =
-        parseFloat(box.style.left) || 0;
-
-
-      originalTop =
-        parseFloat(box.style.top) || 0;
-
-    }
-  );
-
-
-  box.addEventListener(
-    "pointermove",
-    function(event){
-
-      if(!dragging){
-        return;
-      }
-
-
-      const dx =
-        event.clientX -
-        startX;
-
-
-      const dy =
-        event.clientY -
-        startY;
-
-
-      let newLeft =
-        originalLeft + dx;
-
-
-      let newTop =
-        originalTop + dy;
-
-
-      const maxLeft =
-        pageWrapper.clientWidth -
-        box.offsetWidth;
-
-
-      const maxTop =
-        pageWrapper.clientHeight -
-        box.offsetHeight;
-
-
-      newLeft =
-        Math.max(
-          0,
-          Math.min(
-            newLeft,
-            maxLeft
-          )
-        );
-
-
-      newTop =
-        Math.max(
-          0,
-          Math.min(
-            newTop,
-            maxTop
-          )
-        );
-
-
-      box.style.left =
-        newLeft + "px";
-
-
-      box.style.top =
-        newTop + "px";
-
-    }
-  );
-
-
-  box.addEventListener(
-    "pointerup",
-    function(){
-
-      dragging = false;
-
-    }
-  );
-
-}
-
-
-/* =====================================================
-   FONT
-===================================================== */
-
-document
-.getElementById("fontFamily")
-.addEventListener(
-  "change",
-  applyTextStyle
-);
-
-
-/* =====================================================
-   FONT SIZE
-===================================================== */
-
-document
-.getElementById("fontSize")
-.addEventListener(
-  "input",
-  applyTextStyle
-);
-
-
-/* =====================================================
-   COLOR
-===================================================== */
-
-document
-.getElementById("textColor")
-.addEventListener(
-  "input",
-  applyTextStyle
-);
-
-
-/* =====================================================
-   APPLY TEXT STYLE
-===================================================== */
-
-function applyTextStyle(){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  const textarea =
-    selectedTextBox.querySelector(
-      "textarea"
-    );
-
-
-  if(!textarea){
-    return;
-  }
-
-
-  const font =
-    document.getElementById(
-      "fontFamily"
-    ).value;
-
-
-  const size =
-    parseInt(
-      document.getElementById(
-        "fontSize"
-      ).value
-    ) || 18;
-
-
-  const color =
-    document.getElementById(
-      "textColor"
-    ).value;
-
-
-  textarea.style.fontFamily =
-    font + ", Arial, sans-serif";
-
-
-  textarea.style.fontSize =
-    size + "px";
-
-
-  textarea.style.color =
-    color;
-
-}
-
-
-/* =====================================================
-   LOAD TEXT STYLE
-===================================================== */
-
-function loadTextStyle(){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  const textarea =
-    selectedTextBox.querySelector(
-      "textarea"
-    );
-
-
-  if(!textarea){
-    return;
-  }
-
-
-  document.getElementById(
-    "fontSize"
-  ).value =
-    parseInt(
-      textarea.style.fontSize
-    ) || 18;
-
-
-  document.getElementById(
-    "textColor"
-  ).value =
-    rgbToHex(
-      textarea.style.color
-    );
-
-
-  document.getElementById(
-    "fontFamily"
-  ).value =
-    textarea.style.fontFamily
-    .split(",")[0]
-    .replaceAll('"',"")
-    .trim();
-
-}
-
-
-/* =====================================================
-   RGB TO HEX
-===================================================== */
-
-function rgbToHex(rgb){
-
-  if(!rgb){
-    return "#111111";
-  }
-
-
-  if(rgb.startsWith("#")){
-    return rgb;
-  }
-
-
-  const result =
-    rgb.match(
-      /\d+/g
-    );
-
-
-  if(!result){
-    return "#111111";
-  }
-
-
-  return "#" +
-    result
-    .slice(0,3)
-    .map(function(x){
-
-      return parseInt(x)
-      .toString(16)
-      .padStart(2,"0");
-
-    })
-    .join("");
-
-}
-
-
-/* =====================================================
-   BOLD
-===================================================== */
-
-function toggleBold(){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  const textarea =
-    selectedTextBox.querySelector(
-      "textarea"
-    );
-
-
-  if(
-    textarea.style.fontWeight ===
-    "700"
-  ){
-
-    textarea.style.fontWeight =
-      "400";
-
-    document
-    .getElementById("boldBtn")
-    .classList.remove("active");
-
-  }else{
-
-    textarea.style.fontWeight =
-      "700";
-
-    document
-    .getElementById("boldBtn")
-    .classList.add("active");
-
-  }
-
-}
-
-
-/* =====================================================
-   ITALIC
-===================================================== */
-
-function toggleItalic(){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  const textarea =
-    selectedTextBox.querySelector(
-      "textarea"
-    );
-
-
-  if(
-    textarea.style.fontStyle ===
-    "italic"
-  ){
-
-    textarea.style.fontStyle =
-      "normal";
-
-    document
-    .getElementById("italicBtn")
-    .classList.remove("active");
-
-  }else{
-
-    textarea.style.fontStyle =
-      "italic";
-
-    document
-    .getElementById("italicBtn")
-    .classList.add("active");
-
-  }
-
-}
-
-
-/* =====================================================
-   ALIGNMENT
-===================================================== */
-
-function setAlignment(value){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  const textarea =
-    selectedTextBox.querySelector(
-      "textarea"
-    );
-
-
-  textarea.style.textAlign =
-    value;
-
-}
-
-
-/* =====================================================
-   DELETE SELECTED TEXT
-===================================================== */
-
-function deleteSelectedText(){
-
-  if(!selectedTextBox){
-    return;
-  }
-
-
-  selectedTextBox.remove();
-
-  selectedTextBox = null;
-
-}
-
-
-/* =====================================================
-   CLEAR TEXT BOXES
-===================================================== */
-
-function clearTextBoxes(){
-
-  document
-  .querySelectorAll(".text-box")
-  .forEach(function(box){
-
-    box.remove();
-
-  });
-
-
-  selectedTextBox = null;
-
-}
-
-
-/* =====================================================
-   SAVE PDF
-===================================================== */
-
-async function savePDF(){
-
-  if(
-    !originalPDFBytes ||
-    !currentPDF
-  ){
-
-    alert(
-      "पहले कोई PDF खोलें।"
-    );
-
-    return;
-
-  }
-
-
-  const saveButton =
-    document.querySelector(
-      ".btn-primary"
-    );
-
-
-  const oldText =
-    saveButton
-    ? saveButton.innerHTML
-    : "";
-
-
-  try{
-
-    if(saveButton){
-
-      saveButton.disabled = true;
-
-      saveButton.innerHTML =
-        "⏳ Saving...";
-
-    }
-
-
-    showLoading(true);
-
-
-    /* Load source */
-
-    const sourcePDF =
-      await PDFLib.PDFDocument.load(
-        originalPDFBytes
-      );
-
-
-    /* Create output */
-
-    const outputPDF =
-      await PDFLib.PDFDocument.create();
-
-
-    /* Register fontkit */
-
-    outputPDF.registerFontkit(
-      fontkit
-    );
-
-
-    /* Copy pages */
-
-    const pageIndexes = [];
-
-
-    for(
-      let i=0;
-      i<sourcePDF.getPageCount();
-      i++
-    ){
-
-      const pageNumber =
-        i+1;
-
-
-      if(
-        deletedPages.has(
-          pageNumber
-        )
-      ){
-
-        continue;
-
-      }
-
-
-      pageIndexes.push(i);
-
-    }
-
-
-    const copiedPages =
-      await outputPDF.copyPages(
-        sourcePDF,
-        pageIndexes
-      );
-
-
-    copiedPages.forEach(
-      function(page,index){
-
-        const originalIndex =
-          pageIndexes[index];
-
-
-        const pageNumber =
-          originalIndex + 1;
-
-
-        const originalRotation =
-          page.getRotation()
-          ? page.getRotation().angle
-          : 0;
-
-
-        const additionalRotation =
-          pageRotations[
-            pageNumber
-          ] || 0;
-
-
-        const finalRotation =
-          (
-            originalRotation +
-            additionalRotation
-          ) % 360;
-
-
-        page.setRotation(
-          PDFLib.degrees(
-            finalRotation
-          )
-        );
-
-
-        outputPDF.addPage(
-          page
-        );
-
-      }
-    );
-
-
-    /* =================================================
-       ADD TEXT BOXES
-    ================================================= */
-
-    const textBoxes =
-      document.querySelectorAll(
-        ".text-box"
-      );
-
-
-    for(
-      const box of textBoxes
-    ){
-
-      const pageNumber =
-        parseInt(
-          box.dataset.page
-        );
-
-
-      const outputPageIndex =
-        getOutputPageIndex(
-          pageNumber
-        );
-
-
-      if(
-        outputPageIndex < 0
-      ){
-
-        continue;
-
-      }
-
-
-      const page =
-        outputPDF.getPage(
-          outputPageIndex
-        );
-
-
-      const textarea =
-        box.querySelector(
-          "textarea"
-        );
-
-
-      if(
-        !textarea ||
-        !textarea.value.trim()
-      ){
-
-        continue;
-
-      }
-
-
-      /* Page dimensions */
-
-      const pdfWidth =
-        page.getWidth();
-
-
-      const pdfHeight =
-        page.getHeight();
-
-
-      const wrapper =
-        box.parentElement;
-
-
-      const displayWidth =
-        wrapper.clientWidth;
-
-
-      const displayHeight =
-        wrapper.clientHeight;
-
-
-      if(
-        !displayWidth ||
-        !displayHeight
-      ){
-
-        continue;
-
-      }
-
-
-      /* Position */
-
-      const cssX =
-        parseFloat(
-          box.style.left
-        ) || 0;
-
-
-      const cssY =
-        parseFloat(
-          box.style.top
-        ) || 0;
-
-
-      const scaleX =
-        pdfWidth /
-        displayWidth;
-
-
-      const scaleY =
-        pdfHeight /
-        displayHeight;
-
-
-      const x =
-        cssX * scaleX;
-
-
-      const boxHeight =
-        box.offsetHeight *
-        scaleY;
-
-
-      const y =
-        pdfHeight -
-        (
-          cssY * scaleY
-        ) -
-        boxHeight;
-
-
-      /* Font size */
-
-      const cssFontSize =
-        parseFloat(
-          textarea.style.fontSize
-        ) || 18;
-
-
-      const pdfFontSize =
-        cssFontSize *
-        scaleY;
-
-
-      /* Color */
-
-      const hex =
-        textarea.style.color
-        ? rgbToHex(
-            textarea.style.color
-          )
-        : "#111111";
-
-
-      const rgb =
-        hexToRgb(hex);
-
-
-      /* Text */
-
-      const text =
-        textarea.value;
-
-
-      /* Font */
-
-      let embeddedFont;
-
-
-      try{
-
-        embeddedFont =
-          await getFont(
-            outputPDF,
-            textarea
-          );
-
-      }catch(fontError){
-
-        console.warn(
-          "Font loading failed:",
-          fontError
-        );
-
-        embeddedFont =
-          await outputPDF.embedFont(
-            PDFLib.StandardFonts.Helvetica
-          );
-
-      }
-
-
-      const lines =
-        text.split("\n");
-
-
-      let lineY =
-        y +
-        boxHeight -
-        pdfFontSize;
-
-
-      const lineHeight =
-        pdfFontSize * 1.35;
-
-
-      for(
-        const line of lines
-      ){
-
-        if(
-          line.trim() === ""
-        ){
-
-          lineY -= lineHeight;
-
-          continue;
-
-        }
-
-
-        page.drawText(
-          line,
-          {
-
-            x:x,
-
-            y:lineY,
-
-            size:pdfFontSize,
-
-            font:embeddedFont,
-
-            color:
-              PDFLib.rgb(
-                rgb.r,
-                rgb.g,
-                rgb.b
-              ),
-
-            lineHeight:
-              lineHeight
-
-          }
-        );
-
-
-        lineY -= lineHeight;
-
-      }
-
-    }
-
-
-    /* =================================================
-       SAVE
-    ================================================= */
-
-    const pdfBytes =
-      await outputPDF.save();
-
-
-    const blob =
-      new Blob(
-        [pdfBytes],
-        {
-          type:
-            "application/pdf"
-        }
-      );
-
-
-    const url =
-      URL.createObjectURL(
-        blob
-      );
-
-
-    const link =
-      document.createElement(
-        "a"
-      );
-
-
-    link.href =
-      url;
-
-
-    let newName =
-      originalFileName;
-
-
-    if(
-      newName
-      .toLowerCase()
-      .endsWith(".pdf")
-    ){
-
-      newName =
-        newName.slice(
-          0,
-          -4
-        );
-
-    }
-
-
-    link.download =
-      newName +
-      "-edited.pdf";
-
-
-    document.body.appendChild(
-      link
-    );
-
-
-    link.click();
-
-
-    link.remove();
-
-
-    setTimeout(
-      function(){
-
-        URL.revokeObjectURL(
-          url
-        );
-
-      },
-      1000
-    );
-
-
-    showLoading(false);
-
-
-    if(saveButton){
-
-      saveButton.innerHTML =
-        "✓ Saved";
-
-      setTimeout(
-        function(){
-
-          saveButton.innerHTML =
-            oldText;
-
-          saveButton.disabled =
-            false;
-
-        },
-        1800
-      );
-
-    }
-
-
-  }catch(error){
-
-    console.error(
-      "SAVE ERROR:",
-      error
-    );
-
-
-    showLoading(false);
-
-
-    alert(
-      "PDF save करने में समस्या हुई.\n\n" +
-      error.message
-    );
-
-
-    if(saveButton){
-
-      saveButton.disabled =
-        false;
-
-      saveButton.innerHTML =
-        "↓ Save PDF";
-
-    }
-
-  }
-
-}
-
-
-/* =====================================================
-   OUTPUT PAGE INDEX
-===================================================== */
-
-function getOutputPageIndex(
-  originalPageNumber
-){
-
-  let index = 0;
-
-
-  for(
-    let i=1;
-    i<=currentPDF.numPages;
-    i++
-  ){
-
-    if(
-      deletedPages.has(i)
-    ){
-
-      continue;
-
-    }
-
-
-    if(
-      i === originalPageNumber
-    ){
-
-      return index;
-
-    }
-
-
-    index++;
-
-  }
-
-
-  return -1;
-
-}
-
-
-/* =====================================================
-   FONT LOADER
-===================================================== */
-
-async function getFont(
-  pdfDoc,
-  textarea
-){
-
-  const fontName =
-    getCleanFontName(
-      textarea.style.fontFamily
-    );
-
-
-  let fontURL =
-    "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansdevanagari/NotoSansDevanagari%5Bwght%5D.ttf";
-
-
-  if(
-    fontName ===
-    "Noto Serif Devanagari"
-  ){
-
-    fontURL =
-      "https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifdevanagari/NotoSerifDevanagari%5Bwght%5D.ttf";
-
-  }
-
-
-  if(
-    fontName ===
-    "Noto Sans"
-  ){
-
-    fontURL =
-      "https://raw.githubusercontent.com/google/fonts/main/ofl/notosans/NotoSans%5Bwght%5D.ttf";
-
-  }
-
-
-  const response =
-    await fetch(
-      fontURL
-    );
-
-
-  if(!response.ok){
-
-    throw new Error(
-      "Font download failed"
-    );
-
-  }
-
-
-  const fontBytes =
-    await response.arrayBuffer();
-
-
-  return await pdfDoc.embedFont(
-    new Uint8Array(
-      fontBytes
-    ),
-    {
-      subset:true
-    }
-  );
-
-}
-
-
-/* =====================================================
-   CLEAN FONT NAME
-===================================================== */
-
-function getCleanFontName(
-  value
-){
-
-  if(!value){
-    return "Noto Sans Devanagari";
-  }
-
-
-  return value
-    .split(",")[0]
-    .replaceAll('"',"")
-    .replaceAll("'","")
-    .trim();
-
-}
-
-
-/* =====================================================
-   HEX TO RGB
-===================================================== */
-
-function hexToRgb(hex){
-
-  hex =
-    hex.replace("#","");
-
-
-  if(hex.length === 3){
-
-    hex =
-      hex
-      .split("")
-      .map(x=>x+x)
-      .join("");
-
-  }
-
-
-  const number =
-    parseInt(
-      hex,
-      16
-    );
-
-
-  return {
-
-    r:
-      ((number >> 16) & 255) / 255,
-
-    g:
-      ((number >> 8) & 255) / 255,
-
-    b:
-      (number & 255) / 255
-
-  };
-
-}
-
-
-/* =====================================================
-   PRINT
-===================================================== */
-
-function printPDF(){
-
-  if(!originalPDFBytes){
-
-    alert(
-      "पहले PDF खोलें।"
-    );
-
-    return;
-
-  }
-
-
-  const blob =
-    new Blob(
-      [originalPDFBytes],
-      {
-        type:
-          "application/pdf"
-      }
-    );
-
-
-  const url =
-    URL.createObjectURL(
-      blob
-    );
-
-
-  const win =
-    window.open(
-      url,
-      "_blank"
-    );
-
-
-  if(!win){
-
-    alert(
-      "Browser ने print window block कर दी।"
-    );
-
-    return;
-
-  }
-
-
-  setTimeout(
-    function(){
-
-      win.print();
-
-    },
-    1000
-  );
-
-}
-
-
-/* =====================================================
-   LOADING
-===================================================== */
-
-function showLoading(show){
-
-  const el =
-    document.getElementById(
-      "loading"
-    );
-
-
-  if(!el){
-    return;
-  }
-
-
-  if(show){
-
-    el.classList.add(
-      "show"
-    );
-
-  }else{
-
-    el.classList.remove(
-      "show"
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   UNDO
-===================================================== */
-
-function undoAction(){
-
-  alert(
-    "Undo system अगले चरण में बेहतर तरीके से जोड़ा जाएगा।"
-  );
-
-}
-
-
-/* =====================================================
-   REDO
-===================================================== */
-
-function redoAction(){
-
-  alert(
-    "Redo system अगले चरण में बेहतर तरीके से जोड़ा जाएगा।"
-  );
-
-}
-
-
-/* =====================================================
-   KEYBOARD SHORTCUTS
-===================================================== */
-
-document.addEventListener(
-  "keydown",
-  function(event){
-
-    /* Ctrl + O */
-
-    if(
-      event.ctrlKey &&
-      event.key.toLowerCase() === "o"
-    ){
-
-      event.preventDefault();
-
-      openFile();
-
-    }
-
-
-    /* Ctrl + S */
-
-    if(
-      event.ctrlKey &&
-      event.key.toLowerCase() === "s"
-    ){
-
-      event.preventDefault();
-
-      savePDF();
-
-    }
-
-
-    /* Escape */
-
-    if(
-      event.key === "Escape"
-    ){
-
-      disableTextMode();
-
-    }
-
-
-    /* Delete selected text */
-
-    if(
-      event.key === "Delete" &&
-      selectedTextBox &&
-      document.activeElement.tagName !==
-      "TEXTAREA"
-    ){
-
-      deleteSelectedText();
-
-    }
-
-  }
-);
-
-
-/* =====================================================
-   INITIAL
-===================================================== */
-
-console.log(
-  "SSPDF Editor loaded successfully."
-);
-
-</script>
-
+  <!-- PASSWORD PROMPT MODAL -->
+  <div class="modal-backdrop hidden" id="modal-password">
+    <div class="modal-box sm">
+      <div class="modal-header">
+        <h3>Password Required</h3>
+      </div>
+      <div class="modal-body">
+        <p>This PDF file is encrypted and password-protected.</p>
+        <input type="password" id="pdf-password-input" class="modal-input" placeholder="Enter password..." />
+      </div>
+      <div class="modal-footer">
+        <button class="primary-btn" id="btn-submit-password">Unlock PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- MAIN SCRIPT -->
+  <script src="./script.js"></script>
 </body>
 </html>
